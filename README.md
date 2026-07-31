@@ -10,6 +10,7 @@ Each skill is a self-contained folder under [`skills/`](./skills). Drop one into
 |---|---|
 | [`designing-agent-error-messages`](./skills/designing-agent-error-messages) | Audit and rewrite your error messages, exceptions, and API/SDK/CLI failures so an agent can self-correct from the message alone. Grounded in patterns from 3,500+ agent runs across 136 dev tools. |
 | [`agent-auth`](./skills/agent-auth) | Log a real human into a dev tool's CLI by auto-opening the OAuth browser popup and letting the login complete itself — no token copy-paste, no browser automation. Sanity + Netlify recipes plus a verified login reference for 19 dev-tool CLIs. |
+| [`vent-friction`](./skills/vent-friction) | When your agent hits real friction with a third-party dev tool — a bug, broken docs, a misleading error — it captures the repro while it's fresh and files a dense, reproducible issue to the tool's makers via `npx agentspa vent`, only after you say yes. |
 
 _More coming — discoverability, agent-friendly docs, SDK design._
 
