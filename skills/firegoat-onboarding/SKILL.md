@@ -101,7 +101,8 @@ tests:
 `env:` is the only way to set env vars for the agent; it never sees `vars:`. Use it for per-run
 tool home dirs (so sessions don't collide across tests and runs), feature flags, and pointing a
 tool at the local build. Values are strings (quote numbers) with placeholders `{{vars.KEY}}`,
-`{{run.id}}`, `{{run.n}}`, `{{run.workdir}}`, `{{test.name}}`. `PATH`, `CLAUDE_CONFIG_DIR` and
+`{{run.id}}`, `{{run.n}}`, `{{test.name}}`, plus `$FIREGOAT_OUT` and `$FIREGOAT_WORKDIR` (the
+same dirs setup and checks see; no other `$` expansion, `$HOME` stays literal). `PATH`, `CLAUDE_CONFIG_DIR` and
 `FIREGOAT_*` are firegoat's and can't be set. Credentials stay in the shell that runs eval, not
 in firegoat.yaml.
 
@@ -119,8 +120,8 @@ the agent's PATH.
 - **npx**: pack and install the CLI into the workdir (the npm example above); `npx acme` prefers
   `node_modules/.bin`. Add a positive check `test -x "$FIREGOAT_WORKDIR/node_modules/.bin/acme"`.
 - **uvx**: it uses its own tool environment and ignores the workdir `.venv` and a project
-  `uv.toml`, so point it at the wheel with `env: {UV_FIND_LINKS: "{{run.workdir}}/../../../out"}`
-  (that's `$FIREGOAT_OUT`). uv takes the highest version from the index and the links, so the
+  `uv.toml`, so point it at the wheel with `env: {UV_FIND_LINKS: "$FIREGOAT_OUT"}`.
+  uv takes the highest version from the index and the links, so the
   local build must be newer than the release.
 - **pipx run**: test the bare-name binary or `python -m acme` from the workdir `.venv` instead,
   and say so in the prompt.
