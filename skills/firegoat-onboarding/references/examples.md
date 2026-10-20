@@ -67,8 +67,8 @@ tests:
 ### 4. Pure user need, discovery
 
 No docs URL, no package names: the test is whether the agent finds the right packages in
-the docs you ship. The workdir has no repo files, so `setup:` and `workdir_setup:` copy the
-docs in.
+the docs you ship. The agent's folder starts empty, so `setup:` and `workdir_setup:` copy the
+docs in; the last check makes sure it didn't walk up into the repo instead.
 
 ```yaml
 setup: cp -R docs "$FIREGOAT_OUT/acme-docs"
@@ -84,6 +84,7 @@ tests:
       docs in ./docs, not web search.
     checks:
       - run: "! grep -q '\"name\":\"WebFetch\"' \"$FIREGOAT_SESSION\""
+      - run: "! grep -q '\\.\\./\\.\\./' \"$FIREGOAT_SESSION\""
 ```
 
 ### 5. Shortest
