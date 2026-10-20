@@ -100,9 +100,13 @@ the agent's PATH.
 
 `setup:` and `workdir_setup:` take one shell command or a list. Python:
 `setup: uv build --wheel --out-dir "$FIREGOAT_OUT"` and
-`workdir_setup: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl`. A CLI binary written to
-`$FIREGOAT_OUT` is on the agent's PATH as is. Add them only when the tests should use the repo's
-local build.
+`workdir_setup: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl`. A binary written to
+`$FIREGOAT_OUT` is on the agent's PATH, but that only helps for CLIs called by bare name. If users
+run it via `npx`/`uvx`/`pipx run`, a PATH binary doesn't stop those from fetching the registry
+release: pack and install the CLI into the workdir like the npm example, and add one guard check
+that nothing came from the registry, e.g.
+`! grep -Eq '"command":"[^"]*(npm (install|i|add) [^"]*acme|acme@)' "$FIREGOAT_SESSION"`.
+Add them only when the tests should use the repo's local build.
 
 If `firegoat.yaml` exists, merge: keep every existing test and top-level key, append yours, and
 suffix yours with `-2` on a name collision. Never delete or rewrite user tests. Use `>-` folded
