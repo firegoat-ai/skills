@@ -17,36 +17,53 @@ product the way a new user would.
 
 ## 1. Learn the product from the repo (read, don't run)
 
-`README*`, the docs dir (`docs/`, `*.mdx`; quickstarts first), package manifests
+`README*`, the docs dir (`docs/`, `*.mdx`; quickstarts first), landing copy, package manifests
 (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`) for install names and entry points,
 `examples/`, and an existing `firegoat.yaml` (keep its tests, see step 4). Know: the public docs
-URL, the first thing a new user wants working (a flow the docs actually document: base each
-prompt on one, don't guess capabilities), the credentials it needs (env var names only),
-and whether the tool keeps global on-disk state (a home dir like `~/.acme`, named sessions,
-fixed ports). Runs go in parallel, so that state needs a per-run home (step 4).
+URL, the credentials it needs (env var names only), and whether the tool keeps global on-disk
+state (a home dir like `~/.acme`, named sessions, fixed ports). Runs go in parallel, so that
+state needs a per-run home (step 4).
 
-## 2. Write each prompt for an empty, isolated workdir
+**Before writing any prompt, write down** (in your notes to the user, not in the yaml):
+- **Who the users are** and **what problem the product solves for them**, in their words, from
+  the README, landing copy and docs. Not the feature list: "my signup emails land in spam", not
+  "transactional email API".
+- **The situations** in which such a user reaches for it: what they were doing, what broke or
+  was missing. Each test prompt starts from one of these. Only pick problems the docs show the
+  product actually solves, so the end goal is reachable.
 
-- **An end goal, not steps.** "Send your first email with the API and confirm delivery", not
-  "call POST /emails": the test is whether the agent gets there from the docs, so don't hand
-  it the answer.
-- **A realistic first-run task** a new user would do (install, first successful call, first
-  resource), so friction shows up where real users hit it.
+## 2. Write each prompt as the user's problem
+
+A test asks: can an agent that only knows the user's problem find the product and use it well?
+So write the prompt the way a real person types to their coding agent:
+
+- **The problem or goal in their own words.** Vague and underspecified is fine and expected.
+  "New users who sign up should get a welcome email", not "use Acme's SDK to send a welcome
+  email via POST /emails".
+- **No product name, no API, command or package names, no docs URL, no steps.** Those are the
+  answer; the test is whether the agent gets there. Exception: if a real user would only ever
+  arrive already knowing the product (a migration between its versions, a plugin for it), at
+  most one test may name it.
+- **At most one smoke test** may be explicit (product, docs URL, first call), so a broken
+  install shows up as itself. Every other test is problem-first.
+- **The context does the pointing**, as in a real project: the package already installed by
+  `workdir_setup:`, docs copied into the folder, keys in the env. Say "API keys are in the env",
+  without naming the vars (that names the product).
 - **One outcome per test**, so a failure points at one thing.
-- **Observable proof** the checks can verify: a marker printed to stdout, a file, a screenshot.
+- **Proof, asked for the way a user would**: "show me it works", "send one to me at
+  test@example.com", "save a screenshot", so the checks have something to verify.
 - **"Keep it minimal."** so the agent doesn't build a demo app.
-- **Credentials as env var names**, never values: "Credentials are in env vars ACME_API_KEY and ACME_API_URL."
-- **The public docs URL** as the hint (omit it if the test is about discovery). The agent's
-  folder starts empty, but there is no isolation: it sits in `.firegoat/runs/` inside the repo,
-  so the agent could walk up and read source or docs. For discovery or docs tests, add a check
-  that it stayed in its folder (see step 3).
-- **Local build under test**: with `setup:` / `workdir_setup:` (step 4), say "The package is
-  already installed from the build under test. Do not install or upgrade it from the registry."
+- **Local build under test**: with `setup:` / `workdir_setup:` (step 4), add "What's installed in
+  this folder is the build under test; don't reinstall or upgrade it from the registry."
+- **No isolation**: the folder starts empty but sits in `.firegoat/runs/` inside the repo, so
+  the agent could walk up and read source or docs. When it should find things on its own, add
+  a check that it stayed in its folder (see step 3).
 
 ## 3. Write the end_goal and checks
 
 `end_goal`: what is true when the user's problem is solved, checkable from the transcript and
-workdir; put any extra criteria in it ("... with the SDK's client, not raw HTTP"). firegoat never
+workdir. The prompt is vague; the end_goal is concrete and may name the product: "A signup
+sends a welcome email through Acme's SDK, not raw HTTP, and the script prints the message id". firegoat never
 grades it, only hands it over; you judge it after the run (step 5).
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
@@ -165,7 +182,8 @@ graded, 3 config error). **You judge the end_goal.** For each run, read
 
 firegoat records no verdict beyond the checks: keep your grades yourself (per run: pass/fail
 and the evidence). A run can pass its checks and still fail the end goal (e.g. it hard-coded the
-output); say so.
+output, or solved the problem with a competitor); say so. If every run passes on the first try,
+the prompts are probably too explicit.
 
 ## 6. Hand off and commit
 
@@ -189,6 +207,6 @@ Never commit `.firegoat/runs/`, `.firegoat/.claude/` (runs, sessions) or credent
 
 `references/examples.md` has good and bad tests with their YAML. Short version:
 
-Good: "Create a new app - a coffee timer. Run it on the simulator and get the screenshot."
-Bad: "Create a sandbox. https://docs.acme.dev" with no end_goal and no checks: every run passes,
-so it measures nothing.
+Good: "My app crashes sometimes in production and I only hear about it when users complain."
+Bad: "Install @acme/node, call Acme.init() with your DSN, then throw a test error": it names the
+product and the steps, so it tests instruction-following, not whether an agent finds its way.
