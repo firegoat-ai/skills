@@ -109,8 +109,9 @@ the agent's PATH.
   bare-name binary or `python -m acme` from the workdir `.venv` instead, and say so in the prompt.
 
 Guard against the registry release in either case:
-`! grep -Eq '"command":"[^"]*((npm (install|i|add)|pnpm (add|dlx)) [^"]*acme|uvx [^"]*acme|pipx (run|install) [^"]*acme|pip3? install [^"]*acme)' "$FIREGOAT_SESSION"`
-Don't flag `npx acme`: with the local install that's the right way to run it, and the positive
+`! grep -Eq '"command":"[^"]*((npm (install|i|add)|pnpm (add|dlx)) [^"]*acme|(npx|bunx|yarn dlx) [^"]*acme@|uvx [^"]*acme|pipx (run|install) [^"]*acme|pip3? install [^"]*acme)' "$FIREGOAT_SESSION"`
+Don't flag plain `npx acme`: with the local install that's the right way to run it (but
+`npx acme@latest` skips it, hence `acme@` in the guard), and the positive
 `node_modules/.bin` check above proves the local build is there.
 Add them only when the tests should use the repo's local build.
 
