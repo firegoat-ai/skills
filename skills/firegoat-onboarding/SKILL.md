@@ -90,6 +90,13 @@ tests:
     timeout: 600           # optional, seconds
 ```
 
+**Fixtures** (helper scripts, sample data, a fake server the test needs) go in files under
+`.firegoat/fixtures/`, never inline in firegoat.yaml as heredocs. That folder is committed with
+firegoat.yaml. setup runs in the repo, so copy them from there:
+`setup: cp -R .firegoat/fixtures/. "$FIREGOAT_OUT"`, then in `workdir_setup:` copy what a test
+needs into its folder (`cp "$FIREGOAT_OUT/wizard.mjs" .`). Files in `$FIREGOAT_OUT` are also on
+the agent's PATH.
+
 `setup:` and `workdir_setup:` take one shell command or a list. Python:
 `setup: uv build --wheel --out-dir "$FIREGOAT_OUT"` and
 `workdir_setup: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl`. A CLI binary written to
@@ -131,7 +138,8 @@ checks and your grades per run, and where the agent got stuck (quote the transcr
 Onboarding is finished when the evals are committed, so the team and CI run the same tests.
 End by asking the user to commit, and offer to do it: "Commit firegoat.yaml and the firegoat
 skills to finish onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
-- `firegoat.yaml`;
+- `firegoat.yaml` and `.firegoat/fixtures/` if you made fixtures (`.firegoat/runs/` and
+  `.firegoat/.claude/` are ignored);
 - the installed skills, `.claude/skills/firegoat-onboarding/` and
   `.claude/skills/suggesting-eval-prompts/`. If those are symlinks (`npx skills` can link them
   to `.agents/skills/<name>/`), also commit `.agents/skills/` so teammates and CI don't get
@@ -139,7 +147,7 @@ skills to finish onboarding?" On yes, commit with a message like `chore: add fir
 - `skills-lock.json`, if `npx skills` wrote one.
 
 If `.gitignore` ignores `.claude/` (or `.agents/`), say so and ask before `git add -f`.
-Never commit `.firegoat/` (runs, sessions; it ignores itself) or credentials.
+Never commit `.firegoat/runs/`, `.firegoat/.claude/` (runs, sessions) or credentials.
 
 ## Examples
 
