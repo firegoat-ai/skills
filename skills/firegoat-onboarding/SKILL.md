@@ -130,11 +130,16 @@ checks and your grades per run, and where the agent got stuck (quote the transcr
 
 Onboarding is finished when the evals are committed, so the team and CI run the same tests.
 End by asking the user to commit, and offer to do it: "Commit firegoat.yaml and the firegoat
-skills to finish onboarding?" On yes, commit `firegoat.yaml`, the installed skills
-(`.claude/skills/firegoat-onboarding/`, `.claude/skills/suggesting-eval-prompts/`) and
-`skills-lock.json` if `npx skills` wrote one, with a message like
-`chore: add firegoat evals`. Never commit `.firegoat/` (runs, sessions; it ignores itself) or
-credentials.
+skills to finish onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
+- `firegoat.yaml`;
+- the installed skills, `.claude/skills/firegoat-onboarding/` and
+  `.claude/skills/suggesting-eval-prompts/`. If those are symlinks (`npx skills` can link them
+  to `.agents/skills/<name>/`), also commit `.agents/skills/` so teammates and CI don't get
+  dangling links;
+- `skills-lock.json`, if `npx skills` wrote one.
+
+If `.gitignore` ignores `.claude/` (or `.agents/`), say so and ask before `git add -f`.
+Never commit `.firegoat/` (runs, sessions; it ignores itself) or credentials.
 
 ## Examples
 
