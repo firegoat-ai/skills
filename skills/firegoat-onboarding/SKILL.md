@@ -10,8 +10,8 @@ description: >-
 
 # Draft firegoat evals
 
-`npx firegoat eval` runs a coding agent (Claude Code) in a fresh, sandboxed workdir with one
-prompt, then runs your checks there. The workdir has no repo files. Your job: write 2-3 tests
+`npx firegoat eval` runs the user's own Claude Code, with none of their config, in a fresh empty
+folder (`.firegoat/runs/<runId>/<test>/<n>/work`) with one prompt, then runs your checks there. Your job: write 2-3 tests
 into `firegoat.yaml` that tell the maintainer whether an agent can succeed with their
 product the way a new user would.
 
@@ -46,8 +46,8 @@ workdir; put any extra criteria in it ("... with the SDK's client, not raw HTTP"
 grades it, only hands it over; you judge it after the run (step 5).
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
-`FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_SESSION` (the agent's stream-json transcript, one
-JSON event per line), `FIREGOAT_OUT` (this run's copy of setup's outputs) and any `vars`.
+`FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_SESSION` (claude's session file, one JSON event
+per line), `FIREGOAT_OUT` (setup's outputs) and any `vars`.
 Prove the outcome and catch cheating:
 - The marker exists: `grep -rq hello-from-acme "$FIREGOAT_WORKDIR"`.
 - The real thing was used: `grep -q '"command":"[^"]*acme ' "$FIREGOAT_SESSION"`.
@@ -63,10 +63,9 @@ block); never reference repo files by relative path.
 ## 4. Write firegoat.yaml
 
 ```yaml
-agents: [claude-code]      # only claude-code for now
 runs: 1                    # runs per test
 setup: npm pack --pack-destination "$FIREGOAT_OUT"   # optional: once per eval, in the repo;
-                           # $FIREGOAT_OUT is copied into each run and put on the agent's PATH
+                           # $FIREGOAT_OUT is first on the agent's PATH
 workdir_setup: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
                            # optional: in each fresh workdir before the agent starts
 vars:                      # optional: defaults for {{vars.KEY}}; `--var KEY=value` overrides
@@ -97,16 +96,16 @@ appear anywhere.
 
 ## 5. Run and grade
 
-The human runs `npx firegoat claude login` once (it opens a browser; or
-`npx firegoat init --auth api-key` with an Anthropic API key). Ask them; don't wait silently.
-Then run `npx firegoat eval --json` yourself. A run takes minutes.
+firegoat runs the user's `claude` on its existing login. If eval says claude is not logged in,
+ask the human to run `claude` once and log in; don't wait silently. Run
+`npx firegoat eval --json` yourself. A run takes minutes.
 
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). **You judge the end_goal.** For each run, read
 `.firegoat/runs/<runId>/<test>/<n>/run.json` (prompt, end_goal, check results, paths), then:
-- `session` (stream-json, one event per line): the last line is `type: "result"` with the
-  agent's final message; tool calls are `tool_use` items in `assistant` messages, their output
-  in the following `user` messages. Did it reach the end goal with the product, or fake it, give up,
+- `session` (claude's session file, one JSON event per line): tool calls are `tool_use` items in
+  `assistant` messages, their output in the following `user` messages; the last `assistant`
+  message is the agent's final answer. Did it reach the end goal with the product, or fake it, give up,
   or ask for help?
 - `workdir`: the files it made. Run them if that's how the end goal is proven. Each criterion in it: met or not, with the evidence.
 
