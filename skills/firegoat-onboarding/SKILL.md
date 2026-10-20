@@ -55,22 +55,23 @@ text, its final answer, the files it made), `FIREGOAT_SESSION` (claude's full se
 and any `vars`.
 Prove the outcome and catch cheating:
 - The marker exists: `grep -rq hello-from-acme "$FIREGOAT_WORKDIR"`.
-- The real thing was used: `grep -q '\$ .*acme ' "$FIREGOAT_TRANSCRIPT"`.
+- The real thing was used: `grep -Eq '^\[[0-9]+\] \$ .*acme ' "$FIREGOAT_TRANSCRIPT"`.
 - The local build was used, not a registry install (see step 4 for the full guard):
-  `! grep -Eq '\$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
-- Only local docs were used (when that's the point): `! grep -q '\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
+  `! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
+- Only local docs were used (when that's the point): `! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
 - It stayed in its folder (a heuristic: no paths into the repo except its own workdir and
   `$FIREGOAT_OUT`; that also keeps it out of `.firegoat/fixtures/`):
   ```yaml
   - run: |
       R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
       # one && chain: a `!` line on its own would not fail the check
-      ! grep -q '\.\./\.\./' "$FIREGOAT_TRANSCRIPT" &&
-        ! (grep -o "$R/[^\" ]*" "$FIREGOAT_TRANSCRIPT" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
+      ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
+        ! (grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -o "$R/[^\" ]*" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
   ```
 
-Match the transcript's tool-call lines (`\$ ...`, `] Write ...`), not plain words, so the
-prompt text or the agent saying "I won't pip install" doesn't trip a check. Commands appear
+Anchor greps to the transcript's tool-call lines, `^\[[0-9]+\] \$ ` (commands) or
+`^\[[0-9]+\] Write ` etc., not plain words: tool output (a README showing `$ npm install acme`)
+and the agent's prose ("I won't pip install") must not trip a check. Commands appear
 unescaped, exactly as run. The lines have no `: `, so a grep fits in an unquoted YAML value.
 
 ## 4. Write firegoat.yaml
@@ -111,7 +112,7 @@ the agent's PATH.
   bare-name binary or `python -m acme` from the workdir `.venv` instead, and say so in the prompt.
 
 Guard against the registry release in either case:
-`! grep -Eq '\$ .*((npm (install|i|add)|pnpm (add|dlx)) .*acme|(npx|bunx|yarn dlx) .*acme@|uvx .*acme|pipx (run|install) .*acme|pip3? install .*acme)' "$FIREGOAT_TRANSCRIPT"`
+`! grep -Eq '^\[[0-9]+\] \$ .*((npm (install|i|add)|pnpm (add|dlx)) .*acme|(npx|bunx|yarn dlx) .*acme@|uvx .*acme|pipx (run|install) .*acme|pip3? install .*acme)' "$FIREGOAT_TRANSCRIPT"`
 Don't flag plain `npx acme`: with the local install that's the right way to run it (but
 `npx acme@latest` skips it, hence `acme@` in the guard), and the positive
 `node_modules/.bin` check above proves the local build is there.
