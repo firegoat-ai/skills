@@ -96,7 +96,7 @@ appear anywhere.
 ## 5. Hand off
 
 Tell the user in a few lines: which tests you added and why, which env vars to export, and to run
-`npx firegoat login` once, then `npx firegoat eval`.
+`npx firegoat init` (it asks how the agent signs in: Claude login or an API key), then `npx firegoat eval`.
 
 ## Examples
 
