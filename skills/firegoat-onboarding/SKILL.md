@@ -123,10 +123,18 @@ firegoat records no verdict beyond the checks: keep your grades yourself (per ru
 and the evidence). A run can pass its checks and still fail the end goal (e.g. it hard-coded the
 output); say so.
 
-## 6. Hand off
+## 6. Hand off and commit
 
 Tell the user in a few lines: which tests you added and why, which env vars to export, the
 checks and your grades per run, and where the agent got stuck (quote the transcript).
+
+Onboarding is finished when the evals are committed, so the team and CI run the same tests.
+End by asking the user to commit, and offer to do it: "Commit firegoat.yaml and the firegoat
+skills to finish onboarding?" On yes, commit `firegoat.yaml`, the installed skills
+(`.claude/skills/firegoat-onboarding/`, `.claude/skills/suggesting-eval-prompts/`) and
+`skills-lock.json` if `npx skills` wrote one, with a message like
+`chore: add firegoat evals`. Never commit `.firegoat/` (runs, sessions; it ignores itself) or
+credentials.
 
 ## Examples
 
