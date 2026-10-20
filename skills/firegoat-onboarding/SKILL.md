@@ -15,24 +15,24 @@ folder (`.firegoat/runs/<runId>/<test>/<n>/work`) with one prompt, then runs you
 into `firegoat.yaml` that tell the maintainer whether an agent can succeed with their
 product the way a new user would.
 
-**Prompt-writing principles live in the `suggesting-eval-prompts` skill**: read its "Research
-the product first" and "What makes a good prompt" sections (end-goal not steps, a realistic
-first-run task, one outcome). Ignore its MCP tools (`list_prompts`, `create_prompt`, ...):
-here the prompts go into `firegoat.yaml` in this repo. This skill covers only the firegoat
-mechanics.
-
 ## 1. Learn the product from the repo (read, don't run)
 
 `README*`, the docs dir (`docs/`, `*.mdx`; quickstarts first), package manifests
 (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`) for install names and entry points,
 `examples/`, and an existing `firegoat.yaml` (keep its tests, see step 4). Know: the public docs
-URL, the first thing a new user wants working, the credentials it needs (env var names only),
+URL, the first thing a new user wants working (a flow the docs actually document: base each
+prompt on one, don't guess capabilities), the credentials it needs (env var names only),
 and whether the tool keeps global on-disk state (a home dir like `~/.acme`, named sessions,
 fixed ports). Runs go in parallel, so that state needs a per-run home (step 4).
 
 ## 2. Write each prompt for an empty, isolated workdir
 
-On top of the `suggesting-eval-prompts` principles:
+- **An end goal, not steps.** "Send your first email with the API and confirm delivery", not
+  "call POST /emails": the test is whether the agent gets there from the docs, so don't hand
+  it the answer.
+- **A realistic first-run task** a new user would do (install, first successful call, first
+  resource), so friction shows up where real users hit it.
+- **One outcome per test**, so a failure points at one thing.
 - **Observable proof** the checks can verify: a marker printed to stdout, a file, a screenshot.
 - **"Keep it minimal."** so the agent doesn't build a demo app.
 - **Credentials as env var names**, never values: "Credentials are in env vars ACME_API_KEY and ACME_API_URL."
@@ -174,12 +174,11 @@ checks and your grades per run, and where the agent got stuck (quote the transcr
 
 Onboarding is finished when the evals are committed, so the team and CI run the same tests.
 End by asking the user to commit, and offer to do it: "Commit firegoat.yaml and the firegoat
-skills to finish onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
+skill to finish onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
 - `firegoat.yaml` and `.firegoat/fixtures/` if you made fixtures (`.firegoat/runs/` and
   `.firegoat/.claude/` are ignored);
-- the installed skills, `.claude/skills/firegoat-onboarding/` and
-  `.claude/skills/suggesting-eval-prompts/`. If those are symlinks (`npx skills` can link them
-  to `.agents/skills/<name>/`), also commit `.agents/skills/` so teammates and CI don't get
+- the installed skill, `.claude/skills/firegoat-onboarding/`. If it is a symlink (`npx skills`
+  can link it to `.agents/skills/<name>/`), also commit `.agents/skills/` so teammates and CI don't get
   dangling links;
 - `skills-lock.json`, if `npx skills` wrote one.
 

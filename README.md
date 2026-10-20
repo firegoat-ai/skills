@@ -38,7 +38,7 @@ For [`npx firegoat`](https://www.npmjs.com/package/firegoat): local AX evals tha
 
 | Skill | What it does |
 |---|---|
-| [`firegoat-onboarding`](./skills/firegoat-onboarding) | Draft 2-3 `firegoat.yaml` tests for the current repo: prompts, goals, script checks, and `setup:` for the local build. Builds on `suggesting-eval-prompts` for the prompt-writing principles. `npx firegoat init --skills` installs both. |
+| [`firegoat-onboarding`](./skills/firegoat-onboarding) | Draft 2-3 `firegoat.yaml` tests for the current repo: prompts, goals, script checks, and `setup:` for the local build. Self-contained, prompt-writing principles included. `npx firegoat init` installs it. |
 
 ## Install
 
