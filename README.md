@@ -44,17 +44,17 @@ For [`npx firegoat`](https://www.npmjs.com/package/firegoat): local AX evals tha
 
 Install every skill with the [`skills`](https://www.npmjs.com/package/skills) CLI:
 ```bash
-npx skills add team2027/skills
+npx skills add firegoat-ai/skills
 ```
 
 Pick specific skills with `--skill`, and add `-g` to install them for all your projects instead of only this one:
 ```bash
-npx skills add team2027/skills -g --skill agent-auth --skill vent-friction
+npx skills add firegoat-ai/skills -g --skill agent-auth --skill vent-friction
 ```
 
 Without the CLI, copy a skill folder into `.claude/skills/` (this project) or `~/.claude/skills/` (all projects):
 ```bash
-git clone https://github.com/team2027/skills.git /tmp/skills
+git clone https://github.com/firegoat-ai/skills.git /tmp/skills
 mkdir -p ~/.claude/skills
 cp -r /tmp/skills/skills/agent-auth ~/.claude/skills/
 ```
