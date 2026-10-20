@@ -56,13 +56,14 @@ Prove the outcome and catch cheating:
 - The local build was used, not a registry install:
   `! grep -Eq '"command":"[^"]*(pip install|npm (install|i) [^"]*acme@)' "$FIREGOAT_SESSION"`.
 - Only local docs were used (when that's the point): `! grep -q '"name":"WebFetch"' "$FIREGOAT_SESSION"`.
-- It stayed in its folder (a heuristic: no paths into the repo outside `.firegoat/`):
+- It stayed in its folder (a heuristic: no paths into the repo except its own workdir and
+  `$FIREGOAT_OUT`; that also keeps it out of `.firegoat/fixtures/`):
   ```yaml
   - run: |
       R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
       # one && chain: a `!` line on its own would not fail the check
       ! grep -q '\.\./\.\./' "$FIREGOAT_SESSION" &&
-        ! (grep -o "$R/[^\" ]*" "$FIREGOAT_SESSION" | grep -v "^$R/\.firegoat/" | grep -q .)
+        ! (grep -o "$R/[^\" ]*" "$FIREGOAT_SESSION" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
   ```
 
 Match tool-call JSON (`"command":"...`), not plain words, so the prompt text or the agent saying
