@@ -2,9 +2,11 @@
 
 Open-source [Claude Code](https://claude.com/claude-code) skills for building software that **AI agents** can actually use — by the team behind [2027.dev](https://2027.dev), where we run real agents through 100+ dev tools and score their experience.
 
-Each skill is a self-contained folder under [`skills/`](./skills). Drop one into your project and your agent will use it.
+Each skill is a self-contained folder under [`skills/`](./skills). This repo is the single source for every 2027 skill, including the product skills the [2027.dev evals](https://2027.dev/evals) dashboard installs.
 
 ## Skills
+
+### Building for agents
 
 | Skill | What it does |
 |---|---|
@@ -14,27 +16,42 @@ Each skill is a self-contained folder under [`skills/`](./skills). Drop one into
 
 _More coming — discoverability, agent-friendly docs, SDK design._
 
+### 2027 evals product skills
+
+These teach your agent to work with your [2027.dev evals](https://2027.dev/evals) data through the 2027 evals MCP server: reading scores, traces, and friction.
+
+| Skill | What it does |
+|---|---|
+| [`interpreting-scores`](./skills/interpreting-scores) | Read and explain an eval run's metrics, insights, and overall experience, including runs with no score. |
+| [`reading-an-agent-trace`](./skills/reading-an-agent-trace) | Reconstruct what an agent did during an eval run and find where it got stuck. |
+| [`reading-browser-screenshots`](./skills/reading-browser-screenshots) | Read browser-agent screenshot turns when friction happened in login, signup, OAuth, or a dashboard. |
+| [`spotting-friction`](./skills/spotting-friction) | Find what hurt an agent's experience and turn it into a fix the tool owner can ship. |
+| [`comparing-competitors`](./skills/comparing-competitors) | Benchmark a provider against its competitors on the same eval prompt. |
+| [`harnesses-and-models`](./skills/harnesses-and-models) | Work out which coding agent and model ran an eval, compare across them, or pin one for a run. |
+| [`suggesting-eval-prompts`](./skills/suggesting-eval-prompts) | Write eval prompts that measure the agent experience of a real end goal. |
+| [`linking-to-the-dashboard`](./skills/linking-to-the-dashboard) | Cite runs, prompts, and trace moments as clickable dashboard links. |
+| [`filing-feedback`](./skills/filing-feedback) | Report a platform bug, confusing behaviour, or missing feature through `send_feedback`. |
+
 ## Install
 
-Copy whichever skill(s) you want from the table above — swap the skill name as needed (`agent-auth`, `designing-agent-error-messages`, …).
-
-**Project scope** (this repo only):
+Install every skill with the [`skills`](https://www.npmjs.com/package/skills) CLI:
 ```bash
-git clone https://github.com/team2027/skills.git /tmp/skills
-mkdir -p .claude/skills
-cp -r /tmp/skills/skills/agent-auth .claude/skills/
-cp -r /tmp/skills/skills/designing-agent-error-messages .claude/skills/
+npx skills add team2027/skills
 ```
 
-**Personal scope** (all your projects):
+Pick specific skills with `--skill`, and add `-g` to install them for all your projects instead of only this one:
+```bash
+npx skills add team2027/skills -g --skill agent-auth --skill vent-friction
+```
+
+Without the CLI, copy a skill folder into `.claude/skills/` (this project) or `~/.claude/skills/` (all projects):
 ```bash
 git clone https://github.com/team2027/skills.git /tmp/skills
 mkdir -p ~/.claude/skills
 cp -r /tmp/skills/skills/agent-auth ~/.claude/skills/
-cp -r /tmp/skills/skills/designing-agent-error-messages ~/.claude/skills/
 ```
 
-Then in Claude Code each skill loads automatically when it's relevant — or invoke one directly: `/agent-auth`, `/designing-agent-error-messages`.
+Then in Claude Code each skill loads automatically when it's relevant — or invoke one directly: `/agent-auth`, `/interpreting-scores`.
 
 ## See where a real agent gets stuck in your product
 
