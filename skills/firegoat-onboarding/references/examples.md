@@ -60,7 +60,7 @@ tests:
       at the end.
     checks:
       - run: grep -Eq '\.(delete|remove)\(' -r "$FIREGOAT_WORKDIR" --include='*.py'
-      - run: "! grep -Eq '^\\[[0-9]+\\] \\$ .*pip3? install .*acme' \"$FIREGOAT_TRANSCRIPT\""
+      - run: "test -s \"$FIREGOAT_TRANSCRIPT\" && ! grep -Eq '^\\[[0-9]+\\] \\$ .*pip3? install .*acme' \"$FIREGOAT_TRANSCRIPT\""
     timeout: 900
 ```
 
@@ -83,11 +83,11 @@ tests:
       The answer names the right Acme package for each requirement and relies on the
       docs in ./docs, not web search.
     checks:
-      - run: "! grep -Eq '^\\[[0-9]+\\] WebFetch ' \"$FIREGOAT_TRANSCRIPT\""
+      - run: "test -s \"$FIREGOAT_TRANSCRIPT\" && ! grep -Eq '^\\[[0-9]+\\] WebFetch ' \"$FIREGOAT_TRANSCRIPT\""
       - run: |
           R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
           # one && chain: a `!` line on its own would not fail the check
-          ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
+          test -s "$FIREGOAT_TRANSCRIPT" && ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
             ! (grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -o "$R/[^\" ]*" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
 ```
 

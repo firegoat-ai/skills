@@ -26,7 +26,9 @@ mechanics.
 `README*`, the docs dir (`docs/`, `*.mdx`; quickstarts first), package manifests
 (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`) for install names and entry points,
 `examples/`, and an existing `firegoat.yaml` (keep its tests, see step 4). Know: the public docs
-URL, the first thing a new user wants working, and the credentials it needs (env var names only).
+URL, the first thing a new user wants working, the credentials it needs (env var names only),
+and whether the tool keeps global on-disk state (a home dir like `~/.acme`, named sessions,
+fixed ports). Runs go in parallel, so that state needs a per-run home (step 4).
 
 ## 2. Write each prompt for an empty, isolated workdir
 
@@ -51,28 +53,30 @@ grades it, only hands it over; you judge it after the run (step 5).
 `FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_TRANSCRIPT` (what the agent did, plain text: each
 tool call as one line `[n] $ <command>` or `[n] Write <path>`, then its short output, the agent's
 text, its final answer, the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
-~50x larger; rarely needed), `FIREGOAT_OUT` (setup's outputs, shared by all runs of one eval),
+~50x larger, escaped; don't grep it), `FIREGOAT_OUT` (setup's outputs, shared by all runs of one eval),
 any `vars` and the run's `env:`.
 Prove the outcome and catch cheating:
 - The marker exists: `grep -rq hello-from-acme "$FIREGOAT_WORKDIR"`.
 - The real thing was used: `grep -Eq '^\[[0-9]+\] \$ .*acme ' "$FIREGOAT_TRANSCRIPT"`.
 - The local build was used, not a registry install (see step 4 for the full guard):
-  `! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
-- Only local docs were used (when that's the point): `! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
+  `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
+- Only local docs were used (when that's the point): `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
 - It stayed in its folder (a heuristic: no paths into the repo except its own workdir and
   `$FIREGOAT_OUT`; that also keeps it out of `.firegoat/fixtures/`):
   ```yaml
   - run: |
       R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
       # one && chain: a `!` line on its own would not fail the check
-      ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
+      test -s "$FIREGOAT_TRANSCRIPT" && ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
         ! (grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -o "$R/[^\" ]*" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
   ```
 
 Anchor greps to the transcript's tool-call lines, `^\[[0-9]+\] \$ ` (commands) or
 `^\[[0-9]+\] Write ` etc., not plain words: tool output (a README showing `$ npm install acme`)
 and the agent's prose ("I won't pip install") must not trip a check. Commands appear
-unescaped, exactly as run. The lines have no `: `, so a grep fits in an unquoted YAML value.
+unescaped, exactly as run. Start every negated grep with `test -s "$FIREGOAT_TRANSCRIPT" &&`:
+on a missing file grep exits 2 and `!` turns that into a pass. The lines have no `: `, so a grep
+fits in an unquoted YAML value.
 
 ## 4. Write firegoat.yaml
 
@@ -85,7 +89,7 @@ workdir_setup: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
 vars:                      # optional: defaults for {{vars.KEY}}; `--var KEY=value` overrides
   SHA: main                # setup, workdir_setup and checks only, never the agent
 env:                       # optional: the agent's env (also its workdir_setup and checks)
-  NONINTERACTIVE_HOME: "/tmp/ni-{{run.id}}-{{run.n}}"
+  NONINTERACTIVE_HOME: "/tmp/ni-{{run.id}}-{{test.name}}-{{run.n}}"
 tests:
   - name: quickstart       # letters, digits, '.', '_', '-'; unique
     prompt: >-
@@ -99,8 +103,11 @@ tests:
 ```
 
 `env:` is the only way to set env vars for the agent; it never sees `vars:`. Use it for per-run
-tool home dirs (so sessions don't collide across tests and runs), feature flags, and pointing a
-tool at the local build. Values are strings (quote numbers) with placeholders `{{vars.KEY}}`,
+tool home dirs, feature flags, and pointing a tool at the local build. eval runs up to 4 runs at
+once (`--parallel N`), so a tool with global state (step 1) gets its home from `env:`, e.g.
+`ACME_HOME: "/tmp/acme-{{run.id}}-{{test.name}}-{{run.n}}"` (`{{run.n}}` alone repeats across
+tests); if it has no such knob (a fixed port), run with `--parallel 1`. Values are strings (quote
+numbers) with placeholders `{{vars.KEY}}`,
 `{{run.id}}`, `{{run.n}}`, `{{test.name}}`, plus `$FIREGOAT_OUT` and `$FIREGOAT_WORKDIR` (the
 same dirs setup and checks see; no other `$` expansion, `$HOME` stays literal). `PATH`, `CLAUDE_CONFIG_DIR` and
 `FIREGOAT_*` are firegoat's and can't be set. Credentials stay in the shell that runs eval, not
@@ -127,7 +134,7 @@ the agent's PATH.
   and say so in the prompt.
 
 Guard against the registry release in either case:
-`! grep -Eq '^\[[0-9]+\] \$ .*((npm (install|i|add)|pnpm (add|dlx)) .*acme|(npx|bunx|yarn dlx) .*acme@|uvx .*acme(@|==)|pipx (run|install) .*acme|pip3? install .*acme)' "$FIREGOAT_TRANSCRIPT"`
+`test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*((npm (install|i|add)|pnpm (add|dlx)) .*acme|(npx|bunx|yarn dlx) .*acme@|uvx .*acme(@|==)|pipx (run|install) .*acme|pip3? install .*acme)' "$FIREGOAT_TRANSCRIPT"`
 Don't flag plain `npx acme` or `uvx acme`: with the local build that's the right way to run it
 (but `npx acme@latest` skips it, hence `acme@` in the guard), and the positive
 `node_modules/.bin` check above proves the local build is there.
