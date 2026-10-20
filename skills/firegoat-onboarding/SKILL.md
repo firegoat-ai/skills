@@ -41,7 +41,8 @@ On top of the `suggesting-eval-prompts` principles:
 
 ## 3. Write the goal and checks
 
-`goal`: one sentence a judge could check from the transcript and workdir.
+`goal`: one sentence a judge could check from the transcript and workdir. `rubric:` (optional
+list) adds criteria. You grade both after the run (step 5); firegoat does not.
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
 `FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_SESSION` (the agent's stream-json transcript, one
@@ -56,7 +57,7 @@ Prove the outcome and catch cheating:
 Match tool-call JSON (`"command":"...`), not plain words, so the prompt text or the agent saying
 "I won't pip install" doesn't trip a check. Quotes inside a command arrive escaped (`\"`), so
 `"command":"[^"]*` stops at the first quoted argument: match what comes before it. Keep checks self-contained (one-liners or a `run: |`
-block); never reference repo files by relative path. No `judge:` checks: they are skipped.
+block); never reference repo files by relative path. Plain-words criteria go in `rubric:`.
 
 ## 4. Write firegoat.yaml
 
@@ -74,6 +75,8 @@ tests:
     prompt: >-
       ...
     goal: ...
+    rubric:                # optional; graded by you after the run, not by firegoat
+      - ...
     checks:                # optional
       - run: grep -rq some-marker "$FIREGOAT_WORKDIR"
     timeout: 600           # optional, seconds
@@ -93,11 +96,30 @@ Before finishing, re-read the file: it parses as YAML, every test has a non-empt
 `prompt` and `goal`, names are unique and match `^[A-Za-z0-9._-]+$`, and no credential values
 appear anywhere.
 
-## 5. Hand off
+## 5. Run and grade
 
-Tell the user in a few lines: which tests you added and why, which env vars to export, and to run
-`npx firegoat claude login` once (or `npx firegoat init --auth api-key` to use an Anthropic API
-key instead), then `npx firegoat eval`.
+The human runs `npx firegoat claude login` once (it opens a browser; or
+`npx firegoat init --auth api-key` with an Anthropic API key). Ask them; don't wait silently.
+Then run `npx firegoat eval --json` yourself. A run takes minutes.
+
+firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
+graded, 3 config error). **You grade the goal and rubric.** For each run, read
+`.firegoat/runs/<runId>/<test>/<n>/run.json` (prompt, goal, rubric, check results, paths), then:
+- `session` (stream-json, one event per line): the last line is `type: "result"` with the
+  agent's final message; tool calls are `tool_use` items in `assistant` messages, their output
+  in the following `user` messages. Did it reach the goal with the product, or fake it, give up,
+  or ask for help?
+- `workdir`: the files it made. Run them if that's how the goal is proven.
+- Each rubric item: met or not, with the evidence.
+
+Record one verdict per run:
+`npx firegoat grade <runId> <test>#<n> --pass|--fail --reason "<what decided it>"`.
+A run can pass its checks and still fail the goal (e.g. it hard-coded the output); say so.
+
+## 6. Hand off
+
+Tell the user in a few lines: which tests you added and why, which env vars to export, the
+checks and your grades per run, and where the agent got stuck (quote the transcript).
 
 ## Examples
 
