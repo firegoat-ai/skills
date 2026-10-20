@@ -34,8 +34,10 @@ On top of the `suggesting-eval-prompts` principles:
 - **Observable proof** the checks can verify: a marker printed to stdout, a file, a screenshot.
 - **"Keep it minimal."** so the agent doesn't build a demo app.
 - **Credentials as env var names**, never values: "Credentials are in env vars ACME_API_KEY and ACME_API_URL."
-- **The public docs URL** as the hint (omit it if the test is about discovery). The agent cannot
-  read the repo.
+- **The public docs URL** as the hint (omit it if the test is about discovery). The agent's
+  folder starts empty, but there is no isolation: it sits in `.firegoat/runs/` inside the repo,
+  so the agent could walk up and read source or docs. For discovery or docs tests, add a check
+  that it stayed in its folder (see step 3).
 - **Local build under test**: with `setup:` / `workdir_setup:` (step 4), say "The package is
   already installed from the build under test. Do not install or upgrade it from the registry."
 
@@ -47,13 +49,14 @@ grades it, only hands it over; you judge it after the run (step 5).
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
 `FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_SESSION` (claude's session file, one JSON event
-per line), `FIREGOAT_OUT` (setup's outputs) and any `vars`.
+per line), `FIREGOAT_OUT` (setup's outputs, shared by all runs of one eval) and any `vars`.
 Prove the outcome and catch cheating:
 - The marker exists: `grep -rq hello-from-acme "$FIREGOAT_WORKDIR"`.
 - The real thing was used: `grep -q '"command":"[^"]*acme ' "$FIREGOAT_SESSION"`.
 - The local build was used, not a registry install:
   `! grep -Eq '"command":"[^"]*(pip install|npm (install|i) [^"]*acme@)' "$FIREGOAT_SESSION"`.
 - Only local docs were used (when that's the point): `! grep -q '"name":"WebFetch"' "$FIREGOAT_SESSION"`.
+- It stayed in its folder (no peeking at the repo): `! grep -q '\.\./\.\./' "$FIREGOAT_SESSION"`.
 
 Match tool-call JSON (`"command":"...`), not plain words, so the prompt text or the agent saying
 "I won't pip install" doesn't trip a check. Quotes inside a command arrive escaped (`\"`), so
