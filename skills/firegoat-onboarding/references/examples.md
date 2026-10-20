@@ -17,7 +17,7 @@ tests:
       to explain recursion in one sentence, then run a scorer that grades whether the
       answer is concise and accurate. Print the agent answer, the numeric score and
       the scorer reason to stdout. Keep it minimal.
-    goal: >-
+    end_goal: >-
       A minimal project runs and prints the agent's answer, a numeric score and the
       scorer's reason.
     checks:
@@ -34,7 +34,7 @@ tests:
       issue type from a support message, have an agent draft a response, then add a
       priority label. Run it once on a customer asking for a refund and print the
       final result. Keep it minimal.
-    goal: >-
+    end_goal: >-
       The workflow runs once on a refund request and prints a result containing the
       issue type, a drafted response and a priority label.
 ```
@@ -55,7 +55,7 @@ tests:
       from the build under test. Do not install or upgrade it from PyPI.
       Docs: https://docs.acme.dev/python. Credentials are in env vars ACME_API_KEY
       and ACME_API_URL.
-    goal: >-
+    end_goal: >-
       The script prints hello-from-acme from inside a sandbox and deletes the sandbox
       at the end.
     checks:
@@ -79,7 +79,7 @@ tests:
       I'm building a mobile app with Acme. It needs a local database, maps, age
       gating, localization, Sign in with Apple and a small on-device model. Does Acme
       offer packages for these? Which ones would you use?
-    goal: >-
+    end_goal: >-
       The answer names the right Acme package for each requirement and relies on the
       docs in ./docs, not web search.
     checks:
@@ -92,21 +92,21 @@ tests:
 tests:
   - name: coffee-timer
     prompt: Create a new app - a coffee timer. Run it on the simulator and get the screenshot.
-    goal: A screenshot shows a working coffee timer app running on the simulator.
+    end_goal: A screenshot shows a working coffee timer app running on the simulator.
     checks:
       - run: find "$FIREGOAT_WORKDIR" -name '*.png' -size +1k | grep -q .
 ```
 
 ## Bad
 
-### No goal, no checks
+### No end_goal, no checks
 
 ```text
 prompt: "Create a sandbox. https://docs.acme.dev"
 ```
 
 Ungradeable: nothing says what success looks like, so every run "succeeds". Add an
-observable outcome ("run echo hello-from-acme inside it and print the output"), a goal
+observable outcome ("run echo hello-from-acme inside it and print the output"), an end_goal
 and a check.
 
 ### Implementation steps
