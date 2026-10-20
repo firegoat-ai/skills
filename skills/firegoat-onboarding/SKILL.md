@@ -54,7 +54,8 @@ Prove the outcome and catch cheating:
 - Only local docs were used (when that's the point): `! grep -q '"name":"WebFetch"' "$FIREGOAT_SESSION"`.
 
 Match tool-call JSON (`"command":"...`), not plain words, so the prompt text or the agent saying
-"I won't pip install" doesn't trip a check. Keep checks self-contained (one-liners or a `run: |`
+"I won't pip install" doesn't trip a check. Quotes inside a command arrive escaped (`\"`), so
+`"command":"[^"]*` stops at the first quoted argument: match what comes before it. Keep checks self-contained (one-liners or a `run: |`
 block); never reference repo files by relative path. No `judge:` checks: they are skipped.
 
 ## 4. Write firegoat.yaml
