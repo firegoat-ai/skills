@@ -88,7 +88,7 @@ tests:
           R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
           # one && chain: a `!` line on its own would not fail the check
           ! grep -q '\.\./\.\./' "$FIREGOAT_SESSION" &&
-            ! (grep -o "$R/[^\" ]*" "$FIREGOAT_SESSION" | grep -v "^$R/\.firegoat/" | grep -q .)
+            ! (grep -o "$R/[^\" ]*" "$FIREGOAT_SESSION" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
 ```
 
 ### 5. Shortest
