@@ -100,9 +100,20 @@ the agent's PATH.
 
 `setup:` and `workdir_setup:` take one shell command or a list. Python:
 `setup: uv build --wheel --out-dir "$FIREGOAT_OUT"` and
-`workdir_setup: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl`. A CLI binary written to
-`$FIREGOAT_OUT` is on the agent's PATH as is. Add them only when the tests should use the repo's
-local build.
+`workdir_setup: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl`. A binary written to
+`$FIREGOAT_OUT` is on the agent's PATH, but that only helps for CLIs called by bare name.
+- **npx**: pack and install the CLI into the workdir (the npm example above); `npx acme` prefers
+  `node_modules/.bin`. Add a positive check `test -x "$FIREGOAT_WORKDIR/node_modules/.bin/acme"`.
+- **uvx / pipx run**: these use their own tool environments and ignore the workdir `.venv` and a
+  project `uv.toml` (verified), so a local build can't be preinstalled for them yet. Test the
+  bare-name binary or `python -m acme` from the workdir `.venv` instead, and say so in the prompt.
+
+Guard against the registry release in either case:
+`! grep -Eq '"command":"[^"]*((npm (install|i|add)|pnpm (add|dlx)) [^"]*acme|(npx|bunx|yarn dlx) [^"]*acme@|uvx [^"]*acme|pipx (run|install) [^"]*acme|pip3? install [^"]*acme)' "$FIREGOAT_SESSION"`
+Don't flag plain `npx acme`: with the local install that's the right way to run it (but
+`npx acme@latest` skips it, hence `acme@` in the guard), and the positive
+`node_modules/.bin` check above proves the local build is there.
+Add them only when the tests should use the repo's local build.
 
 If `firegoat.yaml` exists, merge: keep every existing test and top-level key, append yours, and
 suffix yours with `-2` on a name collision. Never delete or rewrite user tests. Use `>-` folded
