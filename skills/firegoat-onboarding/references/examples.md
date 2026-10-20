@@ -66,9 +66,13 @@ tests:
 
 ### 4. Pure user need, discovery
 
-No docs URL, no package names: the test is whether the agent finds the right packages.
+No docs URL, no package names: the test is whether the agent finds the right packages in
+the docs you ship. The workdir has no repo files, so `setup:` and `workdir_setup:` copy the
+docs in.
 
 ```yaml
+setup: cp -R docs "$FIREGOAT_OUT/acme-docs"
+workdir_setup: cp -R "$FIREGOAT_OUT/acme-docs" docs
 tests:
   - name: which-packages
     prompt: >-
@@ -77,7 +81,7 @@ tests:
       offer packages for these? Which ones would you use?
     goal: >-
       The answer names the right Acme package for each requirement and relies on the
-      docs shipped in the project, not web search.
+      docs in ./docs, not web search.
     checks:
       - run: "! grep -q '\"name\":\"WebFetch\"' \"$FIREGOAT_SESSION\""
 ```
