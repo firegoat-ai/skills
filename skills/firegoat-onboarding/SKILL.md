@@ -48,28 +48,31 @@ workdir; put any extra criteria in it ("... with the SDK's client, not raw HTTP"
 grades it, only hands it over; you judge it after the run (step 5).
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
-`FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_SESSION` (claude's session file, one JSON event
-per line), `FIREGOAT_OUT` (setup's outputs, shared by all runs of one eval) and any `vars`.
+`FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_TRANSCRIPT` (what the agent did, plain text: each
+tool call as one line `[n] $ <command>` or `[n] Write <path>`, then its short output, the agent's
+text, its final answer, the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
+~50x larger; rarely needed), `FIREGOAT_OUT` (setup's outputs, shared by all runs of one eval)
+and any `vars`.
 Prove the outcome and catch cheating:
 - The marker exists: `grep -rq hello-from-acme "$FIREGOAT_WORKDIR"`.
-- The real thing was used: `grep -q '"command":"[^"]*acme ' "$FIREGOAT_SESSION"`.
-- The local build was used, not a registry install:
-  `! grep -Eq '"command":"[^"]*(pip install|npm (install|i) [^"]*acme@)' "$FIREGOAT_SESSION"`.
-- Only local docs were used (when that's the point): `! grep -q '"name":"WebFetch"' "$FIREGOAT_SESSION"`.
+- The real thing was used: `grep -Eq '^\[[0-9]+\] \$ .*acme ' "$FIREGOAT_TRANSCRIPT"`.
+- The local build was used, not a registry install (see step 4 for the full guard):
+  `! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
+- Only local docs were used (when that's the point): `! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
 - It stayed in its folder (a heuristic: no paths into the repo except its own workdir and
   `$FIREGOAT_OUT`; that also keeps it out of `.firegoat/fixtures/`):
   ```yaml
   - run: |
       R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
       # one && chain: a `!` line on its own would not fail the check
-      ! grep -q '\.\./\.\./' "$FIREGOAT_SESSION" &&
-        ! (grep -o "$R/[^\" ]*" "$FIREGOAT_SESSION" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
+      ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
+        ! (grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -o "$R/[^\" ]*" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
   ```
 
-Match tool-call JSON (`"command":"...`), not plain words, so the prompt text or the agent saying
-"I won't pip install" doesn't trip a check. Quotes inside a command arrive escaped (`\"`), so
-`"command":"[^"]*` stops at the first quoted argument: match what comes before it. Keep checks self-contained (one-liners or a `run: |`
-block); never reference repo files by relative path.
+Anchor greps to the transcript's tool-call lines, `^\[[0-9]+\] \$ ` (commands) or
+`^\[[0-9]+\] Write ` etc., not plain words: tool output (a README showing `$ npm install acme`)
+and the agent's prose ("I won't pip install") must not trip a check. Commands appear
+unescaped, exactly as run. The lines have no `: `, so a grep fits in an unquoted YAML value.
 
 ## 4. Write firegoat.yaml
 
@@ -109,7 +112,7 @@ the agent's PATH.
   bare-name binary or `python -m acme` from the workdir `.venv` instead, and say so in the prompt.
 
 Guard against the registry release in either case:
-`! grep -Eq '"command":"[^"]*((npm (install|i|add)|pnpm (add|dlx)) [^"]*acme|(npx|bunx|yarn dlx) [^"]*acme@|uvx [^"]*acme|pipx (run|install) [^"]*acme|pip3? install [^"]*acme)' "$FIREGOAT_SESSION"`
+`! grep -Eq '^\[[0-9]+\] \$ .*((npm (install|i|add)|pnpm (add|dlx)) .*acme|(npx|bunx|yarn dlx) .*acme@|uvx .*acme|pipx (run|install) .*acme|pip3? install .*acme)' "$FIREGOAT_TRANSCRIPT"`
 Don't flag plain `npx acme`: with the local install that's the right way to run it (but
 `npx acme@latest` skips it, hence `acme@` in the guard), and the positive
 `node_modules/.bin` check above proves the local build is there.
@@ -132,10 +135,10 @@ ask the human to run `claude` once and log in; don't wait silently. Run
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). **You judge the end_goal.** For each run, read
 `.firegoat/runs/<runId>/<test>/<n>/run.json` (prompt, end_goal, check results, paths), then:
-- `session` (claude's session file, one JSON event per line): tool calls are `tool_use` items in
-  `assistant` messages, their output in the following `user` messages; the last `assistant`
-  message is the agent's final answer. Did it reach the end goal with the product, or fake it, give up,
-  or ask for help?
+- `transcript` (a few KB): every command the agent ran with its short output, what it said, its
+  final answer and the files it made. Did it reach the end goal with the product, or fake it,
+  give up, or ask for help? Open `session` (claude's full JSON) only if a step's output was cut
+  and you need it.
 - `workdir`: the files it made. Run them if that's how the end goal is proven. Each criterion in it: met or not, with the evidence.
 
 firegoat records no verdict beyond the checks: keep your grades yourself (per run: pass/fail
