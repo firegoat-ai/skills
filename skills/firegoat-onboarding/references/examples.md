@@ -84,7 +84,11 @@ tests:
       docs in ./docs, not web search.
     checks:
       - run: "! grep -q '\"name\":\"WebFetch\"' \"$FIREGOAT_SESSION\""
-      - run: "! grep -q '\\.\\./\\.\\./' \"$FIREGOAT_SESSION\""
+      - run: |
+          R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
+          # one && chain: a `!` line on its own would not fail the check
+          ! grep -q '\.\./\.\./' "$FIREGOAT_SESSION" &&
+            ! (grep -o "$R/[^\" ]*" "$FIREGOAT_SESSION" | grep -v "^$R/\.firegoat/" | grep -q .)
 ```
 
 ### 5. Shortest
