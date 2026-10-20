@@ -42,7 +42,7 @@ On top of the `suggesting-eval-prompts` principles:
 ## 3. Write the goal and checks
 
 `goal`: one sentence a judge could check from the transcript and workdir. `rubric:` (optional
-list) adds criteria. You grade both after the run (step 5); firegoat does not.
+list) adds criteria. You grade both after the run (step 5); firegoat only hands them over.
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
 `FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_SESSION` (the agent's stream-json transcript, one
@@ -112,9 +112,9 @@ graded, 3 config error). **You grade the goal and rubric.** For each run, read
 - `workdir`: the files it made. Run them if that's how the goal is proven.
 - Each rubric item: met or not, with the evidence.
 
-Record one verdict per run:
-`npx firegoat grade <runId> <test>#<n> --pass|--fail --reason "<what decided it>"`.
-A run can pass its checks and still fail the goal (e.g. it hard-coded the output); say so.
+firegoat records no verdict beyond the checks: keep your grades yourself (per run: pass/fail
+and the evidence). A run can pass its checks and still fail the goal (e.g. it hard-coded the
+output); say so.
 
 ## 6. Hand off
 
