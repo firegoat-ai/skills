@@ -32,6 +32,14 @@ These teach your agent to work with your [2027.dev evals](https://2027.dev/evals
 | [`linking-to-the-dashboard`](./skills/linking-to-the-dashboard) | Cite runs, prompts, and trace moments as clickable dashboard links. |
 | [`filing-feedback`](./skills/filing-feedback) | Report a platform bug, confusing behaviour, or missing feature through `send_feedback`. |
 
+### firegoat
+
+For [`npx firegoat`](https://www.npmjs.com/package/firegoat): local AX evals that run a coding agent against your SDK, CLI or docs from your own repo.
+
+| Skill | What it does |
+|---|---|
+| [`firegoat-onboarding`](./skills/firegoat-onboarding) | Draft 2-3 `firegoat.yaml` tests for the current repo: prompts, goals, script checks, and `setup:` for the local build. Builds on `suggesting-eval-prompts` for the prompt-writing principles. `npx firegoat init --skills` installs both. |
+
 ## Install
 
 Install every skill with the [`skills`](https://www.npmjs.com/package/skills) CLI:
