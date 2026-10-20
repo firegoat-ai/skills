@@ -21,7 +21,7 @@ tests:
       A minimal project runs and prints the agent's answer, a numeric score and the
       scorer's reason.
     checks:
-      - run: grep -Eq '\$ .*(node|npx|tsx|bun) ' "$FIREGOAT_TRANSCRIPT"
+      - run: grep -Eq '^\[[0-9]+\] \$ .*(node|npx|tsx|bun) ' "$FIREGOAT_TRANSCRIPT"
 ```
 
 ### 2. Multi-step workflow, one realistic input
@@ -60,7 +60,7 @@ tests:
       at the end.
     checks:
       - run: grep -Eq '\.(delete|remove)\(' -r "$FIREGOAT_WORKDIR" --include='*.py'
-      - run: "! grep -Eq '\\$ .*pip3? install .*acme' \"$FIREGOAT_TRANSCRIPT\""
+      - run: "! grep -Eq '^\\[[0-9]+\\] \\$ .*pip3? install .*acme' \"$FIREGOAT_TRANSCRIPT\""
     timeout: 900
 ```
 
@@ -83,12 +83,12 @@ tests:
       The answer names the right Acme package for each requirement and relies on the
       docs in ./docs, not web search.
     checks:
-      - run: "! grep -q '\\] WebFetch ' \"$FIREGOAT_TRANSCRIPT\""
+      - run: "! grep -Eq '^\\[[0-9]+\\] WebFetch ' \"$FIREGOAT_TRANSCRIPT\""
       - run: |
           R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
           # one && chain: a `!` line on its own would not fail the check
-          ! grep -q '\.\./\.\./' "$FIREGOAT_TRANSCRIPT" &&
-            ! (grep -o "$R/[^\" ]*" "$FIREGOAT_TRANSCRIPT" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
+          ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
+            ! (grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -o "$R/[^\" ]*" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
 ```
 
 ### 5. Shortest
