@@ -51,8 +51,8 @@ grades it, only hands it over; you judge it after the run (step 5).
 `FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_TRANSCRIPT` (what the agent did, plain text: each
 tool call as one line `[n] $ <command>` or `[n] Write <path>`, then its short output, the agent's
 text, its final answer, the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
-~50x larger; rarely needed), `FIREGOAT_OUT` (setup's outputs, shared by all runs of one eval)
-and any `vars`.
+~50x larger; rarely needed), `FIREGOAT_OUT` (setup's outputs, shared by all runs of one eval),
+any `vars` and the run's `env:`.
 Prove the outcome and catch cheating:
 - The marker exists: `grep -rq hello-from-acme "$FIREGOAT_WORKDIR"`.
 - The real thing was used: `grep -Eq '^\[[0-9]+\] \$ .*acme ' "$FIREGOAT_TRANSCRIPT"`.
@@ -83,7 +83,9 @@ setup: npm pack --pack-destination "$FIREGOAT_OUT"   # optional: once per eval, 
 workdir_setup: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
                            # optional: in each fresh workdir before the agent starts
 vars:                      # optional: defaults for {{vars.KEY}}; `--var KEY=value` overrides
-  SHA: main
+  SHA: main                # setup, workdir_setup and checks only, never the agent
+env:                       # optional: the agent's env (also its workdir_setup and checks)
+  NONINTERACTIVE_HOME: "/tmp/ni-{{run.id}}-{{run.n}}"
 tests:
   - name: quickstart       # letters, digits, '.', '_', '-'; unique
     prompt: >-
@@ -92,7 +94,16 @@ tests:
     checks:                # optional
       - run: grep -rq some-marker "$FIREGOAT_WORKDIR"
     timeout: 600           # optional, seconds
+    env:                   # optional: on top of the top-level env:
+      ACME_BETA_LOGIN: "1"
 ```
+
+`env:` is the only way to set env vars for the agent; it never sees `vars:`. Use it for per-run
+tool home dirs (so sessions don't collide across tests and runs), feature flags, and pointing a
+tool at the local build. Values are strings (quote numbers) with placeholders `{{vars.KEY}}`,
+`{{run.id}}`, `{{run.n}}`, `{{run.workdir}}`, `{{test.name}}`. `PATH`, `CLAUDE_CONFIG_DIR` and
+`FIREGOAT_*` are firegoat's and can't be set. Credentials stay in the shell that runs eval, not
+in firegoat.yaml.
 
 **Fixtures** (helper scripts, sample data, a fake server the test needs) go in files under
 `.firegoat/fixtures/`, never inline in firegoat.yaml as heredocs. That folder is committed with
@@ -107,14 +118,17 @@ the agent's PATH.
 `$FIREGOAT_OUT` is on the agent's PATH, but that only helps for CLIs called by bare name.
 - **npx**: pack and install the CLI into the workdir (the npm example above); `npx acme` prefers
   `node_modules/.bin`. Add a positive check `test -x "$FIREGOAT_WORKDIR/node_modules/.bin/acme"`.
-- **uvx / pipx run**: these use their own tool environments and ignore the workdir `.venv` and a
-  project `uv.toml` (verified), so a local build can't be preinstalled for them yet. Test the
-  bare-name binary or `python -m acme` from the workdir `.venv` instead, and say so in the prompt.
+- **uvx**: it uses its own tool environment and ignores the workdir `.venv` and a project
+  `uv.toml`, so point it at the wheel with `env: {UV_FIND_LINKS: "{{run.workdir}}/../../../out"}`
+  (that's `$FIREGOAT_OUT`). uv takes the highest version from the index and the links, so the
+  local build must be newer than the release.
+- **pipx run**: test the bare-name binary or `python -m acme` from the workdir `.venv` instead,
+  and say so in the prompt.
 
 Guard against the registry release in either case:
-`! grep -Eq '^\[[0-9]+\] \$ .*((npm (install|i|add)|pnpm (add|dlx)) .*acme|(npx|bunx|yarn dlx) .*acme@|uvx .*acme|pipx (run|install) .*acme|pip3? install .*acme)' "$FIREGOAT_TRANSCRIPT"`
-Don't flag plain `npx acme`: with the local install that's the right way to run it (but
-`npx acme@latest` skips it, hence `acme@` in the guard), and the positive
+`! grep -Eq '^\[[0-9]+\] \$ .*((npm (install|i|add)|pnpm (add|dlx)) .*acme|(npx|bunx|yarn dlx) .*acme@|uvx .*acme(@|==)|pipx (run|install) .*acme|pip3? install .*acme)' "$FIREGOAT_TRANSCRIPT"`
+Don't flag plain `npx acme` or `uvx acme`: with the local build that's the right way to run it
+(but `npx acme@latest` skips it, hence `acme@` in the guard), and the positive
 `node_modules/.bin` check above proves the local build is there.
 Add them only when the tests should use the repo's local build.
 
