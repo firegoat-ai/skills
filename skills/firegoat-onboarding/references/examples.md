@@ -15,32 +15,34 @@ The bad prompt hands the agent the answer; the good one is what the user actuall
 
 ## Good
 
-### 1. Smoke test (the one explicit test)
+### 1. Zero-start (the one test with no context)
 
-At most one per suite: names the product and docs, so a broken install or first call shows up
-as itself. `build:` builds the wheel once from the repo; `install:` installs it into a
-`.venv` in each fresh workdir.
+Exactly one per suite: no `install:`, no keys, no product name, no docs. It shows how an agent
+meets the product cold, like the [AX tier list](https://firegoat.ai/axlist): does it find Acme,
+can it start without a human, and when it needs a key, do the errors say what to do? Passing
+means solved hands-off, or stopped at the first real blocker with the one step left for the user.
 
 ```yaml
-build: uv build --wheel --out-dir "$FIREGOAT_OUT"
-install: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl
 tests:
-  - name: sandbox-hello
+  - name: zero-start
     prompt: >-
-      Using the Acme Python SDK, create a sandbox, run `echo hello-from-acme` inside
-      it, print the output, then delete the sandbox. What's installed in this folder
-      is the build under test; don't reinstall or upgrade it from PyPI.
-      Docs: https://docs.acme.dev/python. API keys are in the env.
+      I need to run some untrusted Python my users upload, somewhere that isn't my
+      machine. Get print('hello from a sandbox') running remotely and show me the output. Keep it minimal.
     end_goal: >-
-      The script prints hello-from-acme from inside an Acme sandbox and deletes the
-      sandbox at the end.
+      Either the snippet's output comes back from an Acme sandbox with no human step,
+      or the agent stops at the first blocker and tells the user exactly what is
+      missing (ACME_API_KEY, and where to create one) instead of guessing or faking it.
     checks:
       - run: >-
-          test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*pip3? install .*acme' "$FIREGOAT_TRANSCRIPT"
+          test -s "$FIREGOAT_TRANSCRIPT" &&
+          grep -Eqi 'acme' "$FIREGOAT_TRANSCRIPT"
       - run: >-
-          grep -Eq '^agent: .*hello-from-acme' "$FIREGOAT_TRANSCRIPT"
+          grep -Eq '^agent: .*(hello from a sandbox|ACME_API_KEY)' "$FIREGOAT_TRANSCRIPT"
     timeout: 900
 ```
+
+In the report, give the tier the run reached (S hands-off, A just confirm, B copy a key,
+C figure it out, D blocked) and quote the error or doc line that helped or stopped it.
 
 ### 2. Problem-first, product found from context
 
