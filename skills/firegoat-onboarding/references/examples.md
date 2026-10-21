@@ -25,6 +25,8 @@ means solved hands-off, or stopped at the first real blocker with the one step l
 ```yaml
 tests:
   - name: zero-start
+    env:
+      ACME_API_KEY: ""      # the user's shell may have one; zero-start must not
     prompt: >-
       I need to run some untrusted Python my users upload, somewhere that isn't my
       machine. Get print('hello from a sandbox') running remotely and show me the output. Keep it minimal.

@@ -45,8 +45,10 @@ So write the prompt the way a real person types to their coding agent:
   most one test may name it.
 - **The test mix: one zero-start test, then one or two configured tests.**
   - **Zero-start** (exactly one): how a user and their agent meet the product with no context at
-    all. Nothing installed by `install:`, no keys in `env:`, no docs copied in, no config, no
-    product name in the prompt: just the user's problem. It measures what the
+    all. Nothing installed by `install:`, no keys, no docs copied in, no config, no product name
+    in the prompt: just the user's problem. The agent inherits the user's shell env, so blank the
+    product's key vars in the test's `env:` (`ACME_API_KEY: ""`); its own HOME already hides the
+    user's config files (`~/.config/acme`). It measures what the
     [AX tier list](https://firegoat.ai/axlist) measures: does the agent find the product, can it
     get started without a human (anonymous or claimable access, signing up on its own), and when
     it needs a key, do the errors and docs tell it exactly what to do? end_goal: the problem is
