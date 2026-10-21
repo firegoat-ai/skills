@@ -224,7 +224,7 @@ starts one, a README or docs page about MCP, or a `@modelcontextprotocol/sdk` (o
 firegoat runs the user's `claude` on its existing login. If eval says claude is not logged in,
 ask the human to run `claude` once and log in; don't wait silently. Run
 `npx -y firegoat@latest eval --json` yourself (it prints its version first). A run takes minutes.
-`npx -y firegoat@latest eval --dry-run` (from the next release) validates firegoat.yaml and lists
+`npx -y firegoat@latest eval --dry-run` validates firegoat.yaml and lists
 the runs without starting any: run it first. If the user is logged in to firegoat.ai, eval uploads
 every session as a private trace; tell them before the first eval (`--no-upload` keeps runs local).
 
