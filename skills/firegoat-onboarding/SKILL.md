@@ -2,7 +2,7 @@
 name: firegoat-onboarding
 description: >-
   Draft 2-3 firegoat evals (firegoat.yaml) for the current repo: tests a coding agent
-  runs locally with `npx firegoat eval`, each with a prompt, an end_goal and script checks.
+  runs locally with `npx -y firegoat@latest eval`, each with a prompt, an end_goal and script checks.
   Use when the user says "write firegoat evals", "draft evals", "set up firegoat",
   "firegoat init", or asks for local agent-experience (AX) evals of their SDK, CLI,
   API or docs.
@@ -10,8 +10,8 @@ description: >-
 
 # Draft firegoat evals
 
-`npx firegoat eval` runs the user's own Claude Code, with none of their config, in a fresh empty
-folder (`.firegoat/runs/<runId>/<test>/<n>/work`) with one prompt, then runs your checks there. Your job: write 2-3 tests
+`npx -y firegoat@latest eval` runs the user's own Claude Code, with none of their config, in a fresh empty
+folder (`.firegoat/runs/<runId>/<test>/<n>/work`) with its own HOME and one prompt, then runs your checks there. Your job: write 2-3 tests
 into `firegoat.yaml` that tell the maintainer whether an agent can succeed with their
 product the way a new user would.
 
@@ -20,9 +20,8 @@ product the way a new user would.
 `README*`, the docs dir (`docs/`, `*.mdx`; quickstarts first), landing copy, package manifests
 (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`) for install names and entry points,
 `examples/`, and an existing `firegoat.yaml` (keep its tests, see step 4). Know: the public docs
-URL, the credentials it needs (env var names only), and whether the tool keeps global on-disk
-state (a home dir like `~/.acme`, named sessions, fixed ports). Runs go in parallel, so that
-state needs a per-run home (step 4).
+URL, the credentials it needs (env var names only), and whether the tool needs a fixed port or
+starts servers or daemons (step 4).
 
 **Before writing any prompt, write down** (in your notes to the user, not in the yaml):
 - **Who the users are** and **what problem the product solves for them**, in their words, from
@@ -82,7 +81,7 @@ Prove the outcome and catch cheating:
   `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
 - Only local docs were used (when that's the point): `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
 - It stayed in its folder (a heuristic: no paths into the repo except its own workdir and
-  `$FIREGOAT_OUT`; that also keeps it out of `.firegoat/fixtures/`):
+  `$FIREGOAT_OUT`; that also keeps it out of the repo's `fixtures/`):
   ```yaml
   - run: |
       R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
@@ -107,10 +106,13 @@ build: npm pack --pack-destination "$FIREGOAT_OUT"   # optional: once per eval, 
                            # $FIREGOAT_OUT is first on the agent's PATH
 install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
                            # optional: in each fresh workdir before the agent starts
+cleanup: pkill -f "$FIREGOAT_WORKDIR" || true
+                           # optional: after the checks, always; never changes the verdict
 vars:                      # optional: defaults for {{vars.KEY}}; `--var KEY=value` overrides
-  SHA: main                # build, install and checks only, never the agent
-env:                       # optional: the agent's env (also its install and checks)
-  NONINTERACTIVE_HOME: "/tmp/ni-{{run.id}}-{{test.name}}-{{run.n}}"
+  SHA: main                # build, install, checks and cleanup only, never the agent
+env:                       # optional: the agent's env (also its install, checks, cleanup)
+  ACME_TELEMETRY: "off"
+claude_args: []            # optional: extra claude arguments, one entry each
 tests:
   - name: quickstart       # letters, digits, '.', '_', '-'; unique
     prompt: >-
@@ -121,30 +123,35 @@ tests:
     timeout: 600           # optional, seconds
     env:                   # optional: on top of the top-level env:
       ACME_BETA_LOGIN: "1"
+    install: cp -R "$FIREGOAT_OUT"/v1-app/. .   # optional: after the top-level install
+    cleanup: acme down || true                  # optional: before the top-level cleanup
+    claude_args: [--chrome]                     # optional: e.g. a test that needs a browser
 ```
 
-`env:` is the only way to set env vars for the agent; it never sees `vars:`. Use it for per-run
-tool home dirs, feature flags, and pointing a tool at the local build. eval runs up to 4 runs at
-once (`--parallel N`), so a tool with global state (step 1) gets its home from `env:`, e.g.
-`ACME_HOME: "/tmp/acme-{{run.id}}-{{test.name}}-{{run.n}}"` (`{{run.n}}` alone repeats across
-tests); if it has no such knob (a fixed port), run with `--parallel 1`. Prefer the tool's own
-home variable over a per-run `HOME`: on macOS claude reads its login from `$HOME/Library`, so
-with a per-run `HOME` every run says "Not logged in". If `HOME` is the only knob, capture the
-real home in `build:` (`echo "$HOME" > "$FIREGOAT_OUT/.real-home"`; build doesn't get entries
-using `{{test.name}}` or `{{run.n}}`) and link it in `install:`:
-`ln -s "$(cat "$FIREGOAT_OUT/.real-home")/Library" "$HOME/Library"`. Values are strings (quote
-numbers) with placeholders `{{vars.KEY}}`,
-`{{run.id}}`, `{{run.n}}`, `{{test.name}}`, plus `$FIREGOAT_OUT` and `$FIREGOAT_WORKDIR` (the
-same dirs build, install and checks see; no other `$` expansion, `$HOME` stays literal). `PATH`, `CLAUDE_CONFIG_DIR` and
-`FIREGOAT_*` are firegoat's and can't be set. Credentials stay in the shell that runs eval, not
-in firegoat.yaml.
+`env:` is the only way to set env vars for the agent; it never sees `vars:`. Use it for feature
+flags and pointing a tool at the local build. Values are strings (quote numbers) with
+placeholders `{{vars.KEY}}`, `{{run.id}}`, `{{run.n}}`, `{{test.name}}`, plus `$FIREGOAT_OUT`,
+`$FIREGOAT_WORKDIR` and `$FIREGOAT_HOME` (no other `$` expansion, `$HOME` stays literal).
+`PATH`, `CLAUDE_CONFIG_DIR`, `FIREGOAT_*`, `ANTHROPIC_MODEL` (use `model:`), `HOME`, the XDG
+`*_HOME` vars and `CLAUDE_ENV_FILE` are firegoat's and can't be set. Credentials stay in the
+shell that runs eval, not in firegoat.yaml.
+
+Every run gets its own HOME (`$FIREGOAT_HOME`, with XDG dirs; claude keeps the real login), so
+parallel runs don't collide and a tool's state in `~` starts fresh. Only a tool that ignores
+HOME needs `ACME_HOME: "$FIREGOAT_HOME/.acme"`; a fixed port needs `--parallel 1`. Keychain
+logins (`gh`, `docker`) look logged out in a run: log tools in from `install:` or pass tokens
+in `env:`. Stop servers or daemons the agent may leave running with `cleanup:`, not a check.
 
 **Fixtures** (helper scripts, sample data, a fake server the test needs) go in files under
-`.firegoat/fixtures/`, never inline in firegoat.yaml as heredocs. That folder is committed with
-firegoat.yaml. build runs in the repo, so copy them from there:
-`build: cp -R .firegoat/fixtures/. "$FIREGOAT_OUT"`, then in `install:` copy what a test
-needs into its folder (`cp "$FIREGOAT_OUT/wizard.mjs" .`). Files in `$FIREGOAT_OUT` are also on
-the agent's PATH.
+`fixtures/` next to firegoat.yaml, committed, never inline as heredocs and never in `.firegoat/`
+(ignored by git). Copy them once with `build: cp -R fixtures/. "$FIREGOAT_OUT"`, then copy what a
+test needs into its folder with that test's own `install:` (`cp "$FIREGOAT_OUT/wizard.mjs" .`).
+Files in `$FIREGOAT_OUT` are also on the agent's PATH.
+
+**Comparing setups** (local build vs registry release, with vs without `--chrome`): write one
+test per setup with the same prompt (a YAML anchor, `prompt: &p ...` then `prompt: *p`) and a
+different per-test `install:`, `env:` or `claude_args:`. Skills installed into the run folder
+are not loaded under eval's flags, so a with/without-skill comparison doesn't work.
 
 `build:` and `install:` take one shell command or a list. Python:
 `build: uv build --wheel --out-dir "$FIREGOAT_OUT"` and
@@ -167,7 +174,8 @@ Don't flag plain `npx acme` or `uvx acme`: with the local build that's the right
 Add them only when the tests should use the repo's local build.
 
 If `firegoat.yaml` exists, merge: keep every existing test and top-level key, append yours, and
-suffix yours with `-2` on a name collision. Never delete or rewrite user tests. Use `>-` folded
+suffix yours with `-2` on a name collision. Never delete or rewrite user tests, except the
+starter `goat` smoke test from `init`: run it first to confirm the setup works, then replace it. Use `>-` folded
 blocks for prompts so colons and quotes stay valid YAML.
 
 Before finishing, re-read the file: it parses as YAML, every test has a non-empty `name`,
@@ -178,7 +186,7 @@ appear anywhere.
 
 firegoat runs the user's `claude` on its existing login. If eval says claude is not logged in,
 ask the human to run `claude` once and log in; don't wait silently. Run
-`npx firegoat eval --json` yourself. A run takes minutes.
+`npx -y firegoat@latest eval --json` yourself (it prints its version first). A run takes minutes.
 
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). **You judge the end_goal.** For each run, read
@@ -200,10 +208,9 @@ Tell the user in a few lines: which tests you added and why, which env vars to e
 checks and your grades per run, and where the agent got stuck (quote the transcript).
 
 Onboarding is finished when the evals are committed, so the team and CI run the same tests.
-End by asking the user to commit, and offer to do it: "Commit firegoat.yaml and
-.firegoat/ to finish onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
-- `firegoat.yaml`, `.firegoat/.gitignore`, and `.firegoat/fixtures/` if you made fixtures
-  (`.firegoat/.gitignore` ignores everything else in `.firegoat/`: runs, sessions);
+End by asking the user to commit, and offer to do it: "Commit firegoat.yaml to finish
+onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
+- `firegoat.yaml`, and `fixtures/` if you made fixtures (`.firegoat/` ignores itself in git);
 - only if the skill was installed into the repo (`init --local-skills`, or picked "this repo";
   the default is global, in `~/.claude/skills/`, and there is nothing to commit):
   `.claude/skills/firegoat-onboarding/`. If it is a symlink (`npx skills` can link it to
@@ -211,7 +218,7 @@ End by asking the user to commit, and offer to do it: "Commit firegoat.yaml and
   dangling links; and `skills-lock.json`, if `npx skills` wrote one.
 
 If `.gitignore` ignores `.claude/` (or `.agents/`), say so and ask before `git add -f`.
-Never commit `.firegoat/runs/`, `.firegoat/.claude/` (runs, sessions) or credentials.
+Never commit anything in `.firegoat/` (runs, sessions) or credentials.
 
 ## Examples
 
