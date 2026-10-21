@@ -43,8 +43,20 @@ So write the prompt the way a real person types to their coding agent:
   answer; the test is whether the agent gets there. Exception: if a real user would only ever
   arrive already knowing the product (a migration between its versions, a plugin for it), at
   most one test may name it.
-- **At most one smoke test** may be explicit (product, docs URL, first call), so a broken
-  install shows up as itself. Every other test is problem-first.
+- **The test mix: one zero-start test, then one or two configured tests.**
+  - **Zero-start** (exactly one): how a user and their agent meet the product with no context at
+    all. Nothing installed by `install:`, no keys in `env:`, no docs copied in, no config, no
+    product name in the prompt: just the user's problem. It measures what the
+    [AX tier list](https://firegoat.ai/axlist) measures: does the agent find the product, can it
+    get started without a human (anonymous or claimable access, signing up on its own), and when
+    it needs a key, do the errors and docs tell it exactly what to do? end_goal: the problem is
+    solved hands-off, or the agent stops at the first real blocker and tells the user the one
+    step left (which key, where to get it). In your report, place the run on the tier list's
+    scale: S hands-off, A just confirm, B copy a key, C figure it out, D blocked.
+  - **Configured** (one or two): the setup a user has after signing up. Keys in `env:` (a
+    staging account, or a local mock of the API started in `build:`/`install:`, since the tests
+    run locally), the build under test installed by `install:`. The prompt is still the user's
+    problem; this measures the product's real use, past the first contact.
 - **The context does the pointing**, as in a real project: the package already installed by
   `install:`, docs copied into the folder, keys in the env. Say "API keys are in the env",
   without naming the vars (that names the product). Give only what a real user's project would
