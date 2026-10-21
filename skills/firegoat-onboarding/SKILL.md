@@ -70,11 +70,14 @@ because the agent stopped at a blocker.
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
 `FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_TRANSCRIPT` (what the agent did, plain text, greppable
 line by line: every line of a shell call starts with `[n] $ ` (same n for the whole call, so a
-multi-line command or heredoc matches on any line), other tool calls are `[n] Write <path>` etc.,
-tool output is indented 4 spaces, every line of the agent's text and final answer starts with
+multi-line command or heredoc matches on any line); a tool with a path, url, pattern or query is
+`[n] Write <path>` etc. (not the file body: check the file); any other tool, MCP ones included,
+is one line `[n] mcp__<server>__<tool> <json input>` cut at 4000 chars; tool output is indented
+4 spaces (15 lines or 1500 chars), every line of the agent's text and final answer starts with
 `agent: `, then the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
 ~50x larger, escaped; don't grep it), `FIREGOAT_OUT` (build's outputs, shared by all runs of one eval),
-any `vars` and the run's `env:`.
+`FIREGOAT_HOME` (the run's own HOME), any `vars` and the run's `env:`. `install:` and `cleanup:`
+get the same, minus the transcript and session.
 Prove the outcome and catch cheating:
 - The real thing was used: `grep -Eq '^\[[0-9]+\] \$ .*acme ' "$FIREGOAT_TRANSCRIPT"`.
 - The local build was used, not a registry install (see step 4 for the full guard):
@@ -221,6 +224,9 @@ starts one, a README or docs page about MCP, or a `@modelcontextprotocol/sdk` (o
 firegoat runs the user's `claude` on its existing login. If eval says claude is not logged in,
 ask the human to run `claude` once and log in; don't wait silently. Run
 `npx -y firegoat@latest eval --json` yourself (it prints its version first). A run takes minutes.
+`npx -y firegoat@latest eval --dry-run` validates firegoat.yaml and lists
+the runs without starting any: run it first. If the user is logged in to firegoat.ai, eval uploads
+every session as a private trace; tell them before the first eval (`--no-upload` keeps runs local).
 
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). **You judge the end_goal.** For each run, read
