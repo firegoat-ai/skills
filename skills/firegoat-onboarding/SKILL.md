@@ -225,8 +225,10 @@ firegoat runs the user's `claude` on its existing login. If eval says claude is 
 ask the human to run `claude` once and log in; don't wait silently. Run
 `npx -y firegoat@latest eval --json` yourself (it prints its version first). A run takes minutes.
 `npx -y firegoat@latest eval --dry-run` validates firegoat.yaml and lists
-the runs without starting any: run it first. If the user is logged in to firegoat.ai, eval uploads
-every session as a private trace; tell them before the first eval (`--no-upload` keeps runs local).
+the runs without starting any: run it first. Run eval without `--no-upload`: when the user is logged
+in to firegoat.ai, eval uploads every session as a private trace and prints its URL, and those
+traces are what the user looks at. Put the trace URLs in your report. Use `--no-upload` only when
+the user asks for it.
 
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). **You judge the end_goal.** For each run, read
