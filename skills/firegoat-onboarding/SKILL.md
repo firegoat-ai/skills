@@ -33,6 +33,10 @@ fixed ports). Runs go in parallel, so that state needs a per-run home (step 4).
 - **A realistic first-run task** a new user would do (install, first successful call, first
   resource), so friction shows up where real users hit it.
 - **One outcome per test**, so a failure points at one thing.
+- **No hedges, no hints.** No escape clauses ("if it doesn't work, example code is enough",
+  "or the equivalent steps", "if a step needs a login, stop and report it") and no hints at the
+  right command or page. The test exists to show what really happens; keep it simple, concrete
+  and somewhat hard.
 - **Observable proof** the checks can verify: a marker printed to stdout, a file, a screenshot.
 - **"Keep it minimal."** so the agent doesn't build a demo app.
 - **Credentials as env var names**, never values: "Credentials are in env vars ACME_API_KEY and ACME_API_URL."
@@ -48,6 +52,11 @@ fixed ports). Runs go in parallel, so that state needs a per-run home (step 4).
 `end_goal`: what is true when the user's problem is solved, checkable from the transcript and
 workdir; put any extra criteria in it ("... with the SDK's client, not raw HTTP"). firegoat never
 grades it, only hands it over; you judge it after the run (step 5).
+
+Both state facts, not hopes: one observable end state, one outcome per check, each either
+happened or didn't. No "and/or", "or equivalent", partial credit, or a goal or check that
+passes because the agent stopped at a blocker and reported it: a run that hit a login wall did
+not reach the outcome. Checks exist to show what happened, not to pass.
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
 `FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_TRANSCRIPT` (what the agent did, plain text: each

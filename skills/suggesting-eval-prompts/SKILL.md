@@ -1,6 +1,6 @@
 ---
 name: suggesting-eval-prompts
-description: Use when helping author a new eval prompt or trigger an eval run, so the task actually measures the agent experience of a real end-goal.
+description: Use when helping author a new eval prompt (its text, end goal and custom checks) or trigger an eval run, so the task actually measures the agent experience of a real end-goal.
 ---
 # Suggesting eval prompts
 
@@ -27,7 +27,17 @@ Before proposing a prompt, ground it in what the product actually offers — don
 - **State an end-goal, not steps.** "Send your first email with the API and confirm delivery" beats "call POST /emails". You're measuring whether the agent can get from zero to the outcome using only the product's docs/APIs — don't hand it the answer.
 - **Make it a realistic first-run task** a developer would actually do (getting started, first successful call, provisioning a resource), so friction surfaces where real users hit it.
 - **Scope it to one outcome** so the run's metrics and friction points describe one coherent task.
+- **Don't hedge and don't hint.** No escape clauses ("if it doesn't work, example code is enough", "or the equivalent documented steps", "if a step needs a login, stop and report it"), no fallbacks, no hints at the right command, page or answer. The eval exists to show what really happens when an agent tries; a prompt that pre-approves giving up or points at the solution measures nothing. Keep it simple, concrete and somewhat hard.
 - **Use template variables** for the parts that vary per run. Declared as `templateVars` (a `string[]`) on the prompt and referenced in the text; supply values at run time via `templateArgs` (a name→value map; values are strings, max ~2000 chars, up to 50 args). Use them for things like a target region, a plan tier, or a resource name — not to leak the solution.
+
+## End goal and custom checks
+`endGoal` and `checks` are what the run is graded on. Their job is to show what really happened, not to pass, so they follow the same rule as the text: simple, concrete, somewhat hard, never hedged.
+- **`endGoal` is one observable end state**, stated as fact: "`chalk --version` runs, chalk.yaml exists, and the Chalk MCP server is registered in Claude Code." Not "... and any login wall is reported honestly instead of worked around".
+- **Each check names one observable outcome that either happened or didn't**: `"mcp-registered": "The Chalk MCP server is registered in Claude Code's MCP config."` Not "the agent prompt and/or agent skills and the MCP server configuration, as documented". If two outcomes matter, write two checks.
+- **No escape clauses**: no "and/or", "or equivalent", "e.g." lists of acceptable paths, "if X was required, then …", no partial credit.
+- **No checks that reward stopping.** Never add a check that passes because the agent stopped at a blocker, reported it clearly or didn't fake credentials. A run that hit a login wall did not reach the outcome: its checks fail, and the trace shows why.
+- **No judgment calls** like "without excessive retries" or "without long dead ends": time, tool calls and errors are already measured on every run.
+- Remove a default check (`null`) only when it cannot apply to the task, never because the agent might fail it.
 
 ## Prompt status values
 The prompt `status` field (plain text) is one of:
