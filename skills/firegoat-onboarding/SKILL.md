@@ -47,7 +47,9 @@ So write the prompt the way a real person types to their coding agent:
   install shows up as itself. Every other test is problem-first.
 - **The context does the pointing**, as in a real project: the package already installed by
   `install:`, docs copied into the folder, keys in the env. Say "API keys are in the env",
-  without naming the vars (that names the product).
+  without naming the vars (that names the product). Give only what a real user's project would
+  already have: don't pre-connect, pre-configure or pre-seed what that user would still have to
+  set up (an MCP server, a config file, existing data). That setup is part of the test.
 - **One outcome per test**, so a failure points at one thing.
 - **Proof, asked for the way a user would**: "show me it works", "send one to me at
   test@example.com", "save a screenshot", so the checks have something to verify.
@@ -241,8 +243,19 @@ graded, 3 config error). **You judge the end_goal.** For each run, read
 
 firegoat records no verdict beyond the checks: keep your grades yourself (per run: pass/fail
 and the evidence). A run can pass its checks and still fail the end goal (e.g. it hard-coded the
-output, or solved the problem with a competitor); say so. If every run passes on the first try,
-the prompts are probably too explicit.
+output, or solved the problem with a competitor); say so.
+
+**Aim for evals that fail.** A suite that passes on the first try measures nothing: the point is
+to find where agents get stuck. Target 20 to 50% of the runs failing. If more than 80%
+pass, make the passing tests harder and run eval again, at most twice:
+- Remove pointing: the product name or its vars in the prompt, a pre-connected server, pre-seeded
+  data, docs copied in when a real user wouldn't have them.
+- Make the ask vaguer and closer to how the user would phrase the problem.
+- Ask for a real outcome with proof (it actually ran, sent or saved something), not a code sketch.
+- Add a realistic constraint from the user's situation (an existing project, a framework they
+  already use, a second step that depends on the first).
+Keep each end goal reachable with the product as documented: a test that fails because the
+task is impossible tells the user nothing. Report which tests you hardened and why.
 
 ## 6. Hand off and commit
 
