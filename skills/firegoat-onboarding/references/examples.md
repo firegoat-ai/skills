@@ -114,11 +114,10 @@ tests:
 ### 6. Two setups, same prompt
 
 No variants feature: one test per setup (local build vs registry release), the prompt shared
-with a YAML anchor. `cleanup:` stops anything the agent left running, e.g. a dev server.
+with a YAML anchor. A dev server the agent left running is stopped by firegoat after the run.
 
 ```yaml
 build: npm pack --pack-destination "$FIREGOAT_OUT"
-cleanup: pkill -f "$FIREGOAT_WORKDIR" || true
 tests:
   - name: preview-local-build
     prompt: &preview I want a hello-world page online at a link I can send to a friend. Keep it minimal.
@@ -144,7 +143,6 @@ build:
   - npm pack --pack-destination "$FIREGOAT_OUT"
   - cp -R fixtures/. "$FIREGOAT_OUT"
 install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/acme-*.tgz
-cleanup: pkill -f "$FIREGOAT_WORKDIR" || true
 tests:
   - name: mcp-connected
     prompt: >-
