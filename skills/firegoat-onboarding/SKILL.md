@@ -62,6 +62,9 @@ So write the prompt the way a real person types to their coding agent:
   without naming the vars (that names the product). Give only what a real user's project would
   already have: don't pre-connect, pre-configure or pre-seed what that user would still have to
   set up (an MCP server, a config file, existing data). That setup is part of the test.
+- **Data in a real account piles up.** When `install:` or a check writes to a shared account
+  (a staging workspace, a real inbox), every run adds more and later runs see it. Tag what you
+  create with `{{run.id}}` and delete it in `cleanup:`.
 - **One outcome per test**, so a failure points at one thing.
 - **Proof, asked for the way a user would**: "show me it works", "send one to me at
   test@example.com", "save a screenshot", so the checks have something to verify.
@@ -93,7 +96,9 @@ is one line `[n] mcp__<server>__<tool> <json input>` cut at 4000 chars; tool out
 `FIREGOAT_HOME` (the run's own HOME), any `vars` and the run's `env:`. `install:` and `cleanup:`
 get the same, minus the transcript and session.
 Prove the outcome and catch cheating:
-- The real thing was used: `grep -Eq '^\[[0-9]+\] \$ .*acme ' "$FIREGOAT_TRANSCRIPT"`.
+- The real thing was used: `grep -Eq '^\[[0-9]+\] \$ (.*[ /])?acme +send' "$FIREGOAT_TRANSCRIPT"`.
+  Match the subcommand that does the job, and allow a path before the binary: agents also call it
+  as `$FIREGOAT_OUT/acme`, `./node_modules/.bin/acme` or through `npx`.
 - The local build was used, not a registry install (see step 4 for the full guard):
   `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
 - Only local docs were used (when that's the point): `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
@@ -245,7 +250,8 @@ traces are what the user looks at. Put the trace URLs in your report. Use `--no-
 the user asks for it.
 
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
-graded, 3 config error). **You judge the end_goal.** For each run, read
+graded, 3 config error). Read the verdict from the exit code and each run's `status`, not from
+the tail of the output: a cut-off `--json` shows only the last run. **You judge the end_goal.** For each run, read
 `.firegoat/runs/<runId>/<test>/<n>/run.json` (prompt, end_goal, check results, paths), then:
 - `transcript` (a few KB): every command the agent ran with its short output, what it said, its
   final answer and the files it made. Did it reach the end goal with the product, or fake it,
