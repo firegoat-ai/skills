@@ -62,6 +62,10 @@ So write the prompt the way a real person types to their coding agent:
   without naming the vars (that names the product). Give only what a real user's project would
   already have: don't pre-connect, pre-configure or pre-seed what that user would still have to
   set up (an MCP server, a config file, existing data). That setup is part of the test.
+- **Seed through the product's public interface**: when a test needs existing state (notes, a
+  project, a pinned comment), create it in `install:` with the product's own CLI, API or MCP,
+  the way a user would, never by importing its source or writing its database. Seeding through
+  internals breaks on every schema change and costs rounds of debugging.
 - **Data in a real account piles up.** When `install:` or a check writes to a shared account
   (a staging workspace, a real inbox), every run adds more and later runs see it. Tag what you
   create with `{{run.id}}` and delete it in `cleanup:`.
@@ -279,6 +283,7 @@ those pass too, make the passing tests harder and run eval again, at most twice:
   already use, a second step that depends on the first).
 Keep each end goal reachable with the product as documented: a test that fails because the
 task is impossible tells the user nothing. Report which tests you hardened and why.
+Once a run fails for a real product reason, stop polishing that test: the failure is the result.
 
 ## 6. Hand off and commit
 
