@@ -108,6 +108,25 @@ tests:
       - run: find "$FIREGOAT_WORKDIR" -name '*.png' -size +1k | grep -q .
 ```
 
+### 6. Two setups, same prompt
+
+No variants feature: one test per setup (local build vs registry release), the prompt shared
+with a YAML anchor. `cleanup:` stops anything the agent left running, e.g. a dev server.
+
+```yaml
+build: npm pack --pack-destination "$FIREGOAT_OUT"
+cleanup: pkill -f "$FIREGOAT_WORKDIR" || true
+tests:
+  - name: preview-local-build
+    prompt: &preview I want a hello-world page online at a link I can send to a friend. Keep it minimal.
+    end_goal: &online The page is live on an Acme preview URL, and the URL is printed.
+    install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/acme-*.tgz
+  - name: preview-npm-release
+    prompt: *preview
+    end_goal: *online
+    install: npm init -y >/dev/null && npm install acme@latest
+```
+
 ## Bad
 
 ### No end_goal, no checks
