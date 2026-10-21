@@ -129,7 +129,7 @@ build: npm pack --pack-destination "$FIREGOAT_OUT"   # optional: once per eval, 
                            # $FIREGOAT_OUT is first on the agent's PATH
 install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
                            # optional: in each fresh workdir before the agent starts
-cleanup: pkill -f "$FIREGOAT_WORKDIR" || true
+cleanup: ./delete-seeded-data.sh
                            # optional: after the checks, always; never changes the verdict
 vars:                      # optional: defaults for {{vars.KEY}}; `--var KEY=value` overrides
   SHA: main                # build, install, checks and cleanup only, never the agent
@@ -236,8 +236,10 @@ starts one, a README or docs page about MCP, or a `@modelcontextprotocol/sdk` (o
 - **Check tool use** in the transcript: an MCP call is a line `[n] mcp__<server>__<tool> {...}`,
   where `<server>` is the key under `mcpServers`:
   `grep -Eq '^\[[0-9]+\] mcp__acme__search' "$FIREGOAT_TRANSCRIPT"`.
-- **Stop servers in `cleanup:`**: a stdio server ends with claude, but what it spawned, or an
-  HTTP server started in `install:`, needs `cleanup: pkill -f "$FIREGOAT_WORKDIR" || true`.
+- **Servers stop on their own**: after `cleanup:`, firegoat stops whatever the agent or `install:`
+  left running in the run (its process group, or anything with its cwd in the workdir) and lists
+  it in run.json `leftover`. `cleanup:` is for things outside the run: seeded data in a real
+  account, a container started with `docker run -d`.
 
 ## 5. Run and grade
 
@@ -266,7 +268,9 @@ output, or solved the problem with a competitor); say so.
 
 **Aim for evals that fail.** A suite that passes on the first try measures nothing: the point is
 to find where agents get stuck. Target 20 to 50% of the runs failing. If more than 80%
-pass, make the passing tests harder and run eval again, at most twice:
+pass, first rerun the same tests on smaller models (`npx -y firegoat@latest eval --model sonnet
+--model haiku`): weaker agents show where the product's docs and errors don't carry them. If
+those pass too, make the passing tests harder and run eval again, at most twice:
 - Remove pointing: the product name or its vars in the prompt, a pre-connected server, pre-seeded
   data, docs copied in when a real user wouldn't have them.
 - Make the ask vaguer and closer to how the user would phrase the problem.
