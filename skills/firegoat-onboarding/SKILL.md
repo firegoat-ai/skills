@@ -47,13 +47,13 @@ So write the prompt the way a real person types to their coding agent:
 - **At most one smoke test** may be explicit (product, docs URL, first call), so a broken
   install shows up as itself. Every other test is problem-first.
 - **The context does the pointing**, as in a real project: the package already installed by
-  `workdir_setup:`, docs copied into the folder, keys in the env. Say "API keys are in the env",
+  `install:`, docs copied into the folder, keys in the env. Say "API keys are in the env",
   without naming the vars (that names the product).
 - **One outcome per test**, so a failure points at one thing.
 - **Proof, asked for the way a user would**: "show me it works", "send one to me at
   test@example.com", "save a screenshot", so the checks have something to verify.
 - **"Keep it minimal."** so the agent doesn't build a demo app.
-- **Local build under test**: with `setup:` / `workdir_setup:` (step 4), add "What's installed in
+- **Local build under test**: with `build:` / `install:` (step 4), add "What's installed in
   this folder is the build under test; don't reinstall or upgrade it from the registry."
 - **No isolation**: the folder starts empty but sits in `.firegoat/runs/` inside the repo, so
   the agent could walk up and read source or docs. When it should find things on its own, add
@@ -67,10 +67,12 @@ sends a welcome email through Acme's SDK, not raw HTTP, and the script prints th
 grades it, only hands it over; you judge it after the run (step 5).
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
-`FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_TRANSCRIPT` (what the agent did, plain text: each
-tool call as one line `[n] $ <command>` or `[n] Write <path>`, then its short output, the agent's
-text, its final answer, the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
-~50x larger, escaped; don't grep it), `FIREGOAT_OUT` (setup's outputs, shared by all runs of one eval),
+`FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_TRANSCRIPT` (what the agent did, plain text, greppable
+line by line: every line of a shell call starts with `[n] $ ` (same n for the whole call, so a
+multi-line command or heredoc matches on any line), other tool calls are `[n] Write <path>` etc.,
+tool output is indented 4 spaces, every line of the agent's text and final answer starts with
+`agent: `, then the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
+~50x larger, escaped; don't grep it), `FIREGOAT_OUT` (build's outputs, shared by all runs of one eval),
 any `vars` and the run's `env:`.
 Prove the outcome and catch cheating:
 - The marker exists: `grep -rq hello-from-acme "$FIREGOAT_WORKDIR"`.
@@ -90,8 +92,9 @@ Prove the outcome and catch cheating:
 
 Anchor greps to the transcript's tool-call lines, `^\[[0-9]+\] \$ ` (commands) or
 `^\[[0-9]+\] Write ` etc., not plain words: tool output (a README showing `$ npm install acme`)
-and the agent's prose ("I won't pip install") must not trip a check. Commands appear
-unescaped, exactly as run. Start every negated grep with `test -s "$FIREGOAT_TRANSCRIPT" &&`:
+and the agent's prose ("I won't pip install") must not trip a check. To check what the agent
+said, anchor to `^agent: `. Commands appear unescaped, exactly as run, and every line of a
+multi-line command carries the prefix, so one grep covers scripts and heredocs too. Start every negated grep with `test -s "$FIREGOAT_TRANSCRIPT" &&`:
 on a missing file grep exits 2 and `!` turns that into a pass. The lines have no `: `, so a grep
 fits in an unquoted YAML value.
 
@@ -99,13 +102,13 @@ fits in an unquoted YAML value.
 
 ```yaml
 runs: 1                    # runs per test
-setup: npm pack --pack-destination "$FIREGOAT_OUT"   # optional: once per eval, in the repo;
+build: npm pack --pack-destination "$FIREGOAT_OUT"   # optional: once per eval, in the repo;
                            # $FIREGOAT_OUT is first on the agent's PATH
-workdir_setup: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
+install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
                            # optional: in each fresh workdir before the agent starts
 vars:                      # optional: defaults for {{vars.KEY}}; `--var KEY=value` overrides
-  SHA: main                # setup, workdir_setup and checks only, never the agent
-env:                       # optional: the agent's env (also its workdir_setup and checks)
+  SHA: main                # build, install and checks only, never the agent
+env:                       # optional: the agent's env (also its install and checks)
   NONINTERACTIVE_HOME: "/tmp/ni-{{run.id}}-{{test.name}}-{{run.n}}"
 tests:
   - name: quickstart       # letters, digits, '.', '_', '-'; unique
@@ -123,23 +126,28 @@ tests:
 tool home dirs, feature flags, and pointing a tool at the local build. eval runs up to 4 runs at
 once (`--parallel N`), so a tool with global state (step 1) gets its home from `env:`, e.g.
 `ACME_HOME: "/tmp/acme-{{run.id}}-{{test.name}}-{{run.n}}"` (`{{run.n}}` alone repeats across
-tests); if it has no such knob (a fixed port), run with `--parallel 1`. Values are strings (quote
+tests); if it has no such knob (a fixed port), run with `--parallel 1`. Prefer the tool's own
+home variable over a per-run `HOME`: on macOS claude reads its login from `$HOME/Library`, so
+with a per-run `HOME` every run says "Not logged in". If `HOME` is the only knob, capture the
+real home in `build:` (`echo "$HOME" > "$FIREGOAT_OUT/.real-home"`; build doesn't get entries
+using `{{test.name}}` or `{{run.n}}`) and link it in `install:`:
+`ln -s "$(cat "$FIREGOAT_OUT/.real-home")/Library" "$HOME/Library"`. Values are strings (quote
 numbers) with placeholders `{{vars.KEY}}`,
 `{{run.id}}`, `{{run.n}}`, `{{test.name}}`, plus `$FIREGOAT_OUT` and `$FIREGOAT_WORKDIR` (the
-same dirs setup and checks see; no other `$` expansion, `$HOME` stays literal). `PATH`, `CLAUDE_CONFIG_DIR` and
+same dirs build, install and checks see; no other `$` expansion, `$HOME` stays literal). `PATH`, `CLAUDE_CONFIG_DIR` and
 `FIREGOAT_*` are firegoat's and can't be set. Credentials stay in the shell that runs eval, not
 in firegoat.yaml.
 
 **Fixtures** (helper scripts, sample data, a fake server the test needs) go in files under
 `.firegoat/fixtures/`, never inline in firegoat.yaml as heredocs. That folder is committed with
-firegoat.yaml. setup runs in the repo, so copy them from there:
-`setup: cp -R .firegoat/fixtures/. "$FIREGOAT_OUT"`, then in `workdir_setup:` copy what a test
+firegoat.yaml. build runs in the repo, so copy them from there:
+`build: cp -R .firegoat/fixtures/. "$FIREGOAT_OUT"`, then in `install:` copy what a test
 needs into its folder (`cp "$FIREGOAT_OUT/wizard.mjs" .`). Files in `$FIREGOAT_OUT` are also on
 the agent's PATH.
 
-`setup:` and `workdir_setup:` take one shell command or a list. Python:
-`setup: uv build --wheel --out-dir "$FIREGOAT_OUT"` and
-`workdir_setup: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl`. A binary written to
+`build:` and `install:` take one shell command or a list. Python:
+`build: uv build --wheel --out-dir "$FIREGOAT_OUT"` and
+`install: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl`. A binary written to
 `$FIREGOAT_OUT` is on the agent's PATH, but that only helps for CLIs called by bare name.
 - **npx**: pack and install the CLI into the workdir (the npm example above); `npx acme` prefers
   `node_modules/.bin`. Add a positive check `test -x "$FIREGOAT_WORKDIR/node_modules/.bin/acme"`.
@@ -191,14 +199,15 @@ Tell the user in a few lines: which tests you added and why, which env vars to e
 checks and your grades per run, and where the agent got stuck (quote the transcript).
 
 Onboarding is finished when the evals are committed, so the team and CI run the same tests.
-End by asking the user to commit, and offer to do it: "Commit firegoat.yaml and the firegoat
-skill to finish onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
-- `firegoat.yaml` and `.firegoat/fixtures/` if you made fixtures (`.firegoat/runs/` and
-  `.firegoat/.claude/` are ignored);
-- the installed skill, `.claude/skills/firegoat-onboarding/`. If it is a symlink (`npx skills`
-  can link it to `.agents/skills/<name>/`), also commit `.agents/skills/` so teammates and CI don't get
-  dangling links;
-- `skills-lock.json`, if `npx skills` wrote one.
+End by asking the user to commit, and offer to do it: "Commit firegoat.yaml and
+.firegoat/ to finish onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
+- `firegoat.yaml`, `.firegoat/.gitignore`, and `.firegoat/fixtures/` if you made fixtures
+  (`.firegoat/.gitignore` ignores everything else in `.firegoat/`: runs, sessions);
+- only if the skill was installed into the repo (`init --local-skills`, or picked "this repo";
+  the default is global, in `~/.claude/skills/`, and there is nothing to commit):
+  `.claude/skills/firegoat-onboarding/`. If it is a symlink (`npx skills` can link it to
+  `.agents/skills/<name>/`), also commit `.agents/skills/` so teammates and CI don't get
+  dangling links; and `skills-lock.json`, if `npx skills` wrote one.
 
 If `.gitignore` ignores `.claude/` (or `.agents/`), say so and ask before `git add -f`.
 Never commit `.firegoat/runs/`, `.firegoat/.claude/` (runs, sessions) or credentials.
