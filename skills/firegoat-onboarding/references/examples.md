@@ -21,12 +21,12 @@ sends a welcome email through Acme (not raw SMTP) and the script prints the mess
 ### 1. Smoke test (the one explicit test)
 
 At most one per suite: names the product and docs, so a broken install or first call shows up
-as itself. `setup:` builds the wheel once from the repo; `workdir_setup:` installs it into a
+as itself. `build:` builds the wheel once from the repo; `install:` installs it into a
 `.venv` in each fresh workdir.
 
 ```yaml
-setup: uv build --wheel --out-dir "$FIREGOAT_OUT"
-workdir_setup: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl
+build: uv build --wheel --out-dir "$FIREGOAT_OUT"
+install: uv venv && uv pip install "$FIREGOAT_OUT"/*.whl
 tests:
   - name: sandbox-hello
     prompt: >-
@@ -83,8 +83,8 @@ The docs are copied into the folder; the last check makes sure the agent didn't 
 the repo instead.
 
 ```yaml
-setup: cp -R docs "$FIREGOAT_OUT/acme-docs"
-workdir_setup: cp -R "$FIREGOAT_OUT/acme-docs" docs
+build: cp -R docs "$FIREGOAT_OUT/acme-docs"
+install: cp -R "$FIREGOAT_OUT/acme-docs" docs
 tests:
   - name: which-packages
     prompt: >-
