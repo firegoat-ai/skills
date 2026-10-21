@@ -142,22 +142,8 @@ HOME needs `ACME_HOME: "$FIREGOAT_HOME/.acme"`; a fixed port needs `--parallel 1
 logins (`gh`, `docker`) look logged out in a run: log tools in from `install:` or pass tokens
 in `env:`. Stop servers or daemons the agent may leave running with `cleanup:`, not a check.
 
-**Testing an MCP server**: write its config per run in `install:` (a heredoc is fine here: it
-needs the run's path) and pass it with `claude_args:` (relative to the run folder); only it loads
-(`--strict-mcp-config` is always on). The server inherits claude's real HOME: set its HOME to
-`$FIREGOAT_HOME`, or it writes to the user's.
-`$FIREGOAT_*` paths in `claude_args:` expand from the next firegoat release.
-```yaml
-install: |
-  cat > .mcp.json <<EOF
-  {"mcpServers": {"acme": {"command": "npx", "args": ["-y", "acme-mcp"], "env": {"HOME": "$FIREGOAT_HOME"}}}}
-  EOF
-claude_args: [--mcp-config, .mcp.json]
-```
-
-**Fixtures** (helper scripts, sample data, a fake server the test needs) go in files under
-`fixtures/` next to firegoat.yaml, committed, never inline as heredocs and never in `.firegoat/`
-(ignored by git). Copy them once with `build: cp -R fixtures/. "$FIREGOAT_OUT"`, then copy what a
+**Fixtures** (helper scripts, sample data, a fake server the test needs, an MCP config) go in
+files under `fixtures/` next to firegoat.yaml, committed, never inline as heredocs. Copy them once with `build: cp -R fixtures/. "$FIREGOAT_OUT"`, then copy what a
 test needs into its folder with that test's own `install:` (`cp "$FIREGOAT_OUT/wizard.mjs" .`).
 Files in `$FIREGOAT_OUT` are also on the agent's PATH.
 
@@ -195,6 +181,41 @@ Before finishing, re-read the file: it parses as YAML, every test has a non-empt
 `prompt` and `end_goal`, names are unique and match `^[A-Za-z0-9._-]+$`, and no credential values
 appear anywhere.
 
+### Testing an MCP server
+
+Do this when the product ships an MCP server: a package `bin` or an `mcp` subcommand that
+starts one, a README or docs page about MCP, or a `@modelcontextprotocol/sdk` (or `mcp`,
+`fastmcp`) dependency.
+
+- **Install the local build** in `install:` as usual (the npm example above), so the server
+  under test is `./node_modules/.bin/acme-mcp` in the run folder (or `.venv/bin/acme-mcp`).
+- **Commit `fixtures/mcp.json`**, a static config pointing at that local server. claude expands
+  `${VAR}` in it from its own env, which holds the run's `FIREGOAT_HOME`, `FIREGOAT_WORKDIR`
+  and `FIREGOAT_OUT`; relative paths are from the run folder. MCP servers inherit claude's real
+  HOME (its login), so always set the server's `HOME` to `${FIREGOAT_HOME}`, or it writes to the
+  user's. Give anything else the server keeps per run (a database file, a port) a per-run value
+  the same way. Use `${...}` with braces; an unset var stays literal text.
+  ```json
+  {"mcpServers": {"acme": {"command": "./node_modules/.bin/acme-mcp", "args": ["serve"],
+    "env": {"HOME": "${FIREGOAT_HOME}", "ACME_DB": "${FIREGOAT_WORKDIR}/acme.db"}}}}
+  ```
+- **Pass it per test**: `build:` copies the fixtures (`cp -R fixtures/. "$FIREGOAT_OUT"`), and a
+  test that starts with the server connected gets
+  `claude_args: [--mcp-config, $FIREGOAT_OUT/mcp.json]`. Only configs passed this way load
+  (`--strict-mcp-config` is always on), so a test without it starts with no MCP server.
+- **Prompts stay problem-first.** With the server connected, the prompt is the user's problem
+  and never names the tools: the question is whether the agent picks them up. Also write **at
+  least one test where it isn't connected**: the agent has to find the MCP server and set it up
+  itself (e.g. write `.mcp.json` in its folder or run `claude mcp add`). A server it adds mid-run
+  may only load in a new session, so that test's end_goal and checks grade the setup
+  (`test -s "$FIREGOAT_WORKDIR/.mcp.json"`, a `claude mcp add` command in the transcript), not
+  tool use.
+- **Check tool use** in the transcript: an MCP call is a line `[n] mcp__<server>__<tool> {...}`,
+  where `<server>` is the key under `mcpServers`:
+  `grep -Eq '^\[[0-9]+\] mcp__acme__search' "$FIREGOAT_TRANSCRIPT"`.
+- **Stop servers in `cleanup:`**: a stdio server ends with claude, but what it spawned, or an
+  HTTP server started in `install:`, needs `cleanup: pkill -f "$FIREGOAT_WORKDIR" || true`.
+
 ## 5. Run and grade
 
 firegoat runs the user's `claude` on its existing login. If eval says claude is not logged in,
@@ -226,11 +247,9 @@ onboarding?" On yes, commit with a message like `chore: add firegoat evals`:
 - `firegoat.yaml`, and `fixtures/` if you made fixtures (`.firegoat/` ignores itself in git);
 - only if the skill was installed into the repo (`init --local-skills`, or picked "this repo";
   the default is global, in `~/.claude/skills/`, and there is nothing to commit):
-  `.claude/skills/firegoat-onboarding/`. If it is a symlink (`npx skills` can link it to
-  `.agents/skills/<name>/`), also commit `.agents/skills/` so teammates and CI don't get
-  dangling links; and `skills-lock.json`, if `npx skills` wrote one.
+  `.claude/skills/firegoat-onboarding/` and `skills-lock.json`.
 
-If `.gitignore` ignores `.claude/` (or `.agents/`), say so and ask before `git add -f`.
+If `.gitignore` ignores `.claude/`, say so and ask before `git add -f`.
 Never commit anything in `.firegoat/` (runs, sessions) or credentials.
 
 ## Examples
