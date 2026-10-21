@@ -258,6 +258,12 @@ in to firegoat.ai, eval uploads every session as a private trace and prints its 
 traces are what the user looks at. Put the trace URLs in your report. Use `--no-upload` only when
 the user asks for it.
 
+**Show the results block first.** Every eval writes the run's results table (each run's status,
+turns, checks, cost and trace URL, the totals and the tier) to
+`.firegoat/runs/<runId>/results.txt` (`runId` is in the `--json` summary); without `--json`, eval
+also prints it last, between two lines of `═`. `cat` it and show it to the user verbatim in a
+fenced code block, before your own grades and analysis. Never paraphrase, redraw or trim it.
+
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). Read the verdict from the exit code and each run's `status`, not from
 the tail of the output: a cut-off `--json` shows only the last run. **You judge the end_goal.** For each run, read
@@ -289,7 +295,8 @@ Once a run fails for a real product reason, stop polishing that test: the failur
 
 ## 6. Hand off and commit
 
-Tell the user in a few lines: which tests you added and why, which env vars to export, the
+Start with the results block from step 5, verbatim in a code block. Then tell the user in a few
+lines: which tests you added and why, which env vars to export, the
 checks and your grades per run, and where the agent got stuck (quote the transcript).
 
 Onboarding is finished when the evals are committed, so the team and CI run the same tests.
