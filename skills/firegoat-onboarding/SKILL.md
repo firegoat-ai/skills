@@ -11,7 +11,7 @@ description: >-
 # Draft firegoat evals
 
 `npx -y firegoat@latest eval` runs the user's own Claude Code, with none of their config, in a fresh empty
-folder (`.firegoat/runs/<runId>/<test>/<n>/work`) with its own HOME and one prompt, then runs your checks there. Your job: write 2-3 tests
+folder outside the repo (`~/.firegoat/runs/<project-hash>/<random>/work`, named after nothing in the repo) with its own HOME and one prompt, then runs your checks there. Your job: write 2-3 tests
 into `firegoat.yaml` that tell the maintainer whether an agent can succeed with their
 product the way a new user would.
 
@@ -71,9 +71,11 @@ So write the prompt the way a real person types to their coding agent:
 - **"Keep it minimal."** so the agent doesn't build a demo app.
 - **Local build under test**: with `build:` / `install:` (step 4), add "What's installed in
   this folder is the build under test; don't reinstall or upgrade it from the registry."
-- **No isolation**: the folder starts empty but sits in `.firegoat/runs/` inside the repo, so
-  the agent could walk up and read source or docs. When it should find things on its own, add
-  a check that it stayed in its folder (see step 3).
+- **No sandbox**: the folder is outside the repo and its path names nothing in it, but the
+  agent runs as the user and could still search the disk for the repo. When it should find
+  things on its own, add a check that it never touched the repo (see step 3).
+- **Expected answers the agent must not see** (a seeded password, a generated id): write them to
+  `$FIREGOAT_RUN_DIR` in `install:` and read them there in checks. The agent never gets that path.
 
 ## 3. Write the end_goal and checks
 
@@ -93,7 +95,9 @@ is one line `[n] mcp__<server>__<tool> <json input>` cut at 4000 chars; tool out
 4 spaces (15 lines or 1500 chars), every line of the agent's text and final answer starts with
 `agent: `, then the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
 ~50x larger, escaped; don't grep it), `FIREGOAT_OUT` (build's outputs, shared by all runs of one eval),
-`FIREGOAT_HOME` (the run's own HOME), any `vars` and the run's `env:`. `install:` and `cleanup:`
+`FIREGOAT_HOME` (the run's own HOME), `FIREGOAT_RUN_DIR` (the run's folder in the repo,
+hidden from the agent), `FIREGOAT_REPO` (the folder holding firegoat.yaml), any `vars` and the
+run's `env:`. `install:` and `cleanup:`
 get the same, minus the transcript and session.
 Prove the outcome and catch cheating:
 - The real thing was used: `grep -Eq '^\[[0-9]+\] \$ (.*[ /])?acme +send' "$FIREGOAT_TRANSCRIPT"`.
@@ -102,14 +106,11 @@ Prove the outcome and catch cheating:
 - The local build was used, not a registry install (see step 4 for the full guard):
   `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
 - Only local docs were used (when that's the point): `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
-- It stayed in its folder (a heuristic: no paths into the repo except its own workdir and
-  `$FIREGOAT_OUT`; that also keeps it out of the repo's `fixtures/`):
+- It never touched the repo (`$FIREGOAT_REPO`, the folder holding firegoat.yaml; checks get it,
+  the agent doesn't), which also keeps it out of the repo's `fixtures/`:
   ```yaml
   - run: |
-      R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
-      # one && chain: a `!` line on its own would not fail the check
-      test -s "$FIREGOAT_TRANSCRIPT" && ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
-        ! (grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -o "$R/[^\" ]*" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
+      test -s "$FIREGOAT_TRANSCRIPT" && ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -qF "$FIREGOAT_REPO"
   ```
 
 Anchor greps to the transcript's tool-call lines, `^\[[0-9]+\] \$ ` (commands) or
