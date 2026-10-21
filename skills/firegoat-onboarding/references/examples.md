@@ -35,7 +35,10 @@ tests:
       The script prints hello-from-acme from inside an Acme sandbox and deletes the
       sandbox at the end.
     checks:
-      - run: "test -s \"$FIREGOAT_TRANSCRIPT\" && ! grep -Eq '^\\[[0-9]+\\] \\$ .*pip3? install .*acme' \"$FIREGOAT_TRANSCRIPT\""
+      - run: >-
+          test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*pip3? install .*acme' "$FIREGOAT_TRANSCRIPT"
+      - run: >-
+          grep -Eq '^agent: .*hello-from-acme' "$FIREGOAT_TRANSCRIPT"
     timeout: 900
 ```
 
@@ -89,7 +92,8 @@ tests:
       The answer names the right Acme package for each requirement and relies on the
       docs in ./docs, not web search.
     checks:
-      - run: "test -s \"$FIREGOAT_TRANSCRIPT\" && ! grep -Eq '^\\[[0-9]+\\] WebFetch ' \"$FIREGOAT_TRANSCRIPT\""
+      - run: >-
+          test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"
       - run: |
           R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
           # one && chain: a `!` line on its own would not fail the check
