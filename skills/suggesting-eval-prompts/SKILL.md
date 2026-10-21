@@ -1,6 +1,6 @@
 ---
 name: suggesting-eval-prompts
-description: Use when helping author a new eval prompt or trigger an eval run, so the task actually measures the agent experience of a real end-goal.
+description: Use when helping author a new eval prompt (its text, end goal and custom checks) or trigger an eval run, so the task actually measures the agent experience of a real end-goal.
 ---
 # Suggesting eval prompts
 
@@ -21,12 +21,13 @@ An eval prompt is the task an agent is told to accomplish against a provider's p
 The same API ships as the `evals` CLI. When the user wants to list or trigger runs from a terminal, a script or CI, point them at the install page, https://2027.dev/evals/cli-install, then e.g. `evals runs list`, `evals runs request --prompt-id <prompt-id>` and `evals runs get --run-id <run-id>`. `evals generate-skills` writes SKILL.md files so their own coding agent can drive it.
 
 ## Research the product first
-Before proposing a prompt, ground it in what the product actually offers — don't guess its capabilities. `web_search` the provider's docs for the primary onboarding flows (first API call, install the SDK, provision a resource), then `web_fetch` the quickstart to see what a realistic first-run task looks like, and derive the prompt's end-goal from a real documented flow. Cite the docs URL when proposing the prompt so the user can check the flow exists. A quick search also confirms a suggested task is actually possible with the product before it becomes an eval.
+Before proposing a prompt, ground it in what the product actually offers — don't guess its capabilities. `web_search` the provider's docs for the primary onboarding flows (first API call, install the SDK, provision a resource), then `web_fetch` the quickstart to see what a realistic first-run task looks like, and derive the prompt's end-goal from a real documented flow. Cite the docs URL in `description`, not in `text`, so the user can check the flow exists. A quick search also confirms a suggested task is actually possible with the product before it becomes an eval.
 
 ## What makes a good prompt
 - **State an end-goal, not steps.** "Send your first email with the API and confirm delivery" beats "call POST /emails". You're measuring whether the agent can get from zero to the outcome using only the product's docs/APIs — don't hand it the answer.
-- **Make it a realistic first-run task** a developer would actually do (getting started, first successful call, provisioning a resource), so friction surfaces where real users hit it.
+- **Make it a realistic task** a developer would actually do, so friction surfaces where real users hit it.
 - **Scope it to one outcome** so the run's metrics and friction points describe one coherent task.
+- **No hedges, no hints**, in `text`, `endGoal` and `checks` alike: no fallbacks, "or equivalent", "and/or" or partial credit, and no hint at the command, page or answer. Each check is one outcome that happened or didn't, e.g. `"mcp-registered": "The Chalk MCP server is registered in Claude Code."` A run that stopped at a blocker failed; no check passes for reporting it. Null a default check only when it cannot apply.
 - **Use template variables** for the parts that vary per run. Declared as `templateVars` (a `string[]`) on the prompt and referenced in the text; supply values at run time via `templateArgs` (a name→value map; values are strings, max ~2000 chars, up to 50 args). Use them for things like a target region, a plan tier, or a resource name — not to leak the solution.
 
 ## Prompt status values

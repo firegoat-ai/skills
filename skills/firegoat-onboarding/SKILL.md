@@ -64,7 +64,9 @@ So write the prompt the way a real person types to their coding agent:
 `end_goal`: what is true when the user's problem is solved, checkable from the transcript and
 workdir. The prompt is vague; the end_goal is concrete and may name the product: "A signup
 sends a welcome email through Acme's SDK, not raw HTTP, and the script prints the message id". firegoat never
-grades it, only hands it over; you judge it after the run (step 5).
+grades it, only hands it over; you judge it after the run (step 5). It and each check state one
+outcome that happened or didn't: no "or equivalent", no partial credit, nothing that passes
+because the agent stopped at a blocker.
 
 `checks`: shell commands run in the agent's workdir after the run; exit 0 = pass. Env:
 `FIREGOAT_WORKDIR` (the workdir), `FIREGOAT_TRANSCRIPT` (what the agent did, plain text, greppable
@@ -75,7 +77,6 @@ tool output is indented 4 spaces, every line of the agent's text and final answe
 ~50x larger, escaped; don't grep it), `FIREGOAT_OUT` (build's outputs, shared by all runs of one eval),
 any `vars` and the run's `env:`.
 Prove the outcome and catch cheating:
-- The marker exists: `grep -rq hello-from-acme "$FIREGOAT_WORKDIR"`.
 - The real thing was used: `grep -Eq '^\[[0-9]+\] \$ .*acme ' "$FIREGOAT_TRANSCRIPT"`.
 - The local build was used, not a registry install (see step 4 for the full guard):
   `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
@@ -214,8 +215,4 @@ Never commit `.firegoat/runs/`, `.firegoat/.claude/` (runs, sessions) or credent
 
 ## Examples
 
-`references/examples.md` has good and bad tests with their YAML. Short version:
-
-Good: "My app crashes sometimes in production and I only hear about it when users complain."
-Bad: "Install @acme/node, call Acme.init() with your DSN, then throw a test error": it names the
-product and the steps, so it tests instruction-following, not whether an agent finds its way.
+`references/examples.md` has good and bad tests with their YAML.
