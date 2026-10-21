@@ -131,6 +131,38 @@ tests:
     install: npm init -y >/dev/null && npm install acme@latest
 ```
 
+### 7. An MCP server: connected, and not
+
+The local build's server, committed as `fixtures/mcp.json`:
+
+```json
+{"mcpServers": {"acme": {"command": "./node_modules/.bin/acme-mcp",
+  "env": {"HOME": "${FIREGOAT_HOME}", "ACME_DB": "${FIREGOAT_WORKDIR}/acme.db"}}}}
+```
+
+```yaml
+build:
+  - npm pack --pack-destination "$FIREGOAT_OUT"
+  - cp -R fixtures/. "$FIREGOAT_OUT"
+install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/acme-*.tgz
+cleanup: pkill -f "$FIREGOAT_WORKDIR" || true
+tests:
+  - name: mcp-connected
+    prompt: >-
+      Which of our open invoices are overdue? List them with how many days late. Keep it minimal.
+    end_goal: The agent answered from the acme MCP server's invoice tools, not by guessing.
+    claude_args: [--mcp-config, $FIREGOAT_OUT/mcp.json]
+    checks:
+      - run: grep -Eq '^\[[0-9]+\] mcp__acme__' "$FIREGOAT_TRANSCRIPT"
+  - name: mcp-setup
+    prompt: >-
+      I want you to be able to look up our invoices directly in future sessions. Set that up
+      with what's installed in this folder.
+    end_goal: The folder's .mcp.json (or a claude mcp add) runs the installed acme-mcp server.
+    checks:
+      - run: grep -q acme-mcp .mcp.json || grep -Eq '^\[[0-9]+\] \$ .*claude mcp add' "$FIREGOAT_TRANSCRIPT"
+```
+
 ## Bad
 
 ### No end_goal, no checks
