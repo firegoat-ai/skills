@@ -79,8 +79,8 @@ tests:
 
 ### 4. Discovery from shipped docs
 
-The docs are copied into the folder; the last check makes sure the agent didn't walk up into
-the repo instead.
+The docs are copied into the folder; the last check makes sure the agent didn't go into the repo
+(`$FIREGOAT_REPO`) instead.
 
 ```yaml
 build: cp -R docs "$FIREGOAT_OUT/acme-docs"
@@ -97,10 +97,7 @@ tests:
       - run: >-
           test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"
       - run: |
-          R="${FIREGOAT_WORKDIR%%/.firegoat/*}"
-          # one && chain: a `!` line on its own would not fail the check
-          test -s "$FIREGOAT_TRANSCRIPT" && ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -q '\.\./\.\./' &&
-            ! (grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -o "$R/[^\" ]*" | grep -vF -e "$FIREGOAT_WORKDIR" -e "$FIREGOAT_OUT" | grep -q .)
+          test -s "$FIREGOAT_TRANSCRIPT" && ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -qF "$FIREGOAT_REPO"
 ```
 
 ### 5. Shortest
