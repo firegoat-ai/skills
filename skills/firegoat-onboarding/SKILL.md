@@ -95,8 +95,8 @@ Anchor greps to the transcript's tool-call lines, `^\[[0-9]+\] \$ ` (commands) o
 and the agent's prose ("I won't pip install") must not trip a check. To check what the agent
 said, anchor to `^agent: `. Commands appear unescaped, exactly as run, and every line of a
 multi-line command carries the prefix, so one grep covers scripts and heredocs too. Start every negated grep with `test -s "$FIREGOAT_TRANSCRIPT" &&`:
-on a missing file grep exits 2 and `!` turns that into a pass. The lines have no `: `, so a grep
-fits in an unquoted YAML value.
+on a missing file grep exits 2 and `!` turns that into a pass. A check containing `: ` (like
+`'^agent: '`) must be a `run: >-` block (or quoted), else firegoat.yaml is invalid YAML.
 
 ## 4. Write firegoat.yaml
 
@@ -141,6 +141,19 @@ parallel runs don't collide and a tool's state in `~` starts fresh. Only a tool 
 HOME needs `ACME_HOME: "$FIREGOAT_HOME/.acme"`; a fixed port needs `--parallel 1`. Keychain
 logins (`gh`, `docker`) look logged out in a run: log tools in from `install:` or pass tokens
 in `env:`. Stop servers or daemons the agent may leave running with `cleanup:`, not a check.
+
+**Testing an MCP server**: write its config per run in `install:` (a heredoc is fine here: it
+needs the run's path) and pass it with `claude_args:` (relative to the run folder); only it loads
+(`--strict-mcp-config` is always on). The server inherits claude's real HOME: set its HOME to
+`$FIREGOAT_HOME`, or it writes to the user's.
+`$FIREGOAT_*` paths in `claude_args:` expand from the next firegoat release.
+```yaml
+install: |
+  cat > .mcp.json <<EOF
+  {"mcpServers": {"acme": {"command": "npx", "args": ["-y", "acme-mcp"], "env": {"HOME": "$FIREGOAT_HOME"}}}}
+  EOF
+claude_args: [--mcp-config, .mcp.json]
+```
 
 **Fixtures** (helper scripts, sample data, a fake server the test needs) go in files under
 `fixtures/` next to firegoat.yaml, committed, never inline as heredocs and never in `.firegoat/`
