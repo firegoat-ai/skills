@@ -13,9 +13,6 @@ The bad prompt hands the agent the answer; the good one is what the user actuall
 | Validation library | "Use acme-validate's `object()` schema to validate the signup form." | "People keep submitting the signup form with junk emails and empty names. Make it reject those with a clear message." |
 | Error-monitoring web app | "Create a project on app.acme.dev and call `Acme.init()` with its DSN." | "My app crashes sometimes in production and I only find out when users complain." |
 
-The end_goal is where the product and the proof get named, e.g. for the first row: "A signup
-sends a welcome email through Acme (not raw SMTP) and the script prints the message id".
-
 ## Good
 
 ### 1. Smoke test (the one explicit test)
@@ -38,7 +35,6 @@ tests:
       The script prints hello-from-acme from inside an Acme sandbox and deletes the
       sandbox at the end.
     checks:
-      - run: grep -Eq '\.(delete|remove)\(' -r "$FIREGOAT_WORKDIR" --include='*.py'
       - run: "test -s \"$FIREGOAT_TRANSCRIPT\" && ! grep -Eq '^\\[[0-9]+\\] \\$ .*pip3? install .*acme' \"$FIREGOAT_TRANSCRIPT\""
     timeout: 900
 ```
@@ -53,13 +49,12 @@ tests:
   - name: run-untrusted-code
     prompt: >-
       Users of my app can paste Python snippets and I want to run them, but not on my
-      server. Show me it works with a snippet that prints hello-from-acme, and don't
+      server. Show me it works with a snippet that prints hello-sandbox, and don't
       leave anything running afterwards. API keys are in the env. Keep it minimal.
     end_goal: >-
       A script runs the snippet in an Acme sandbox via the installed SDK, prints
-      hello-from-acme, and deletes the sandbox at the end.
+      hello-sandbox, and deletes the sandbox at the end.
     checks:
-      - run: grep -Eq '^\[[0-9]+\] \$ .*python' "$FIREGOAT_TRANSCRIPT"
       - run: grep -rqE '^\s*(from|import) acme' "$FIREGOAT_WORKDIR" --include='*.py'
 ```
 
