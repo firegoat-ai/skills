@@ -10,7 +10,7 @@ description: >-
 
 # Draft firegoat evals
 
-`npx -y firegoat@latest eval` runs the user's own Claude Code, with none of their config, in a fresh empty
+`npx -y firegoat@latest eval` runs the user's own Claude Code, with none of their config and none of their shell's env, in a fresh empty
 folder outside the repo (`~/.firegoat/runs/<project-hash>/<random>/work`, named after nothing in the repo) with its own HOME and one prompt, then runs your checks there. Your job: write 2-3 tests
 into `firegoat.yaml` that tell the maintainer whether an agent can succeed with their
 product the way a new user would.
@@ -46,22 +46,28 @@ So write the prompt the way a real person types to their coding agent:
 - **The test mix: one zero-start test, then one or two configured tests.**
   - **Zero-start** (exactly one): how a user and their agent meet the product with no context at
     all. Nothing installed by `install:`, no keys, no docs copied in, no config, no product name
-    in the prompt: just the user's problem. The agent inherits the user's shell env, so blank the
-    product's key vars in the test's `env:` (`ACME_API_KEY: ""`); its own HOME already hides the
-    user's config files (`~/.config/acme`). The build under test must not reach it: top-level
-    `install:` runs for every test, zero-start included, so put the build's install on the
-    configured tests' own `install:`. The agent also inherits the user's PATH; if the product
-    may be installed on this machine, guard it: `install: '! command -v acme'` (a failing
-    install leaves the run not graded instead of quietly warm). It measures what the
+    in the prompt: just the user's problem. The agent gets none of the user's shell env (their
+    `ACME_API_KEY` doesn't reach it) and its own HOME hides their config files
+    (`~/.config/acme`). The build under test must not reach it: top-level `install:` runs for
+    every test, zero-start included, so put the build's install on the configured tests' own
+    `install:`, and give zero-start `env_passthrough: [PATH]`, so `$FIREGOAT_OUT` isn't on its
+    PATH and the build can't be run by bare name. That PATH is still the user's: if the product
+    may be installed on this machine, guard it with
+    `install: '! PATH="${PATH#"$FIREGOAT_OUT:"}" command -v acme'` (install's PATH starts with
+    `$FIREGOAT_OUT`, so strip it; a failing install leaves the run not graded instead of quietly
+    warm). It measures what the
     [AX tier list](https://firegoat.ai/axlist) measures: does the agent find the product, can it
     get started without a human (anonymous or claimable access, signing up on its own), and when
     it needs a key, do the errors and docs tell it exactly what to do? end_goal: the problem is
     solved hands-off, or the agent stops at the first real blocker and tells the user the one
-    step left (which key, where to get it). In your report, place the run on the tier list's
-    scale: S hands-off, A just confirm, B copy a key, C figure it out, D blocked.
-  - **Configured** (one or two): the setup a user has after signing up. Keys in `env:`, or a
-    login the tool keeps in a file, copied in by `install:` (see "Logins and where the agent can
-    write"). Use a staging account or a local mock of the API started in `build:`/`install:`,
+    step left (which key, where to get it). In your report, place the run on the AX tier list's
+    scale (not the checks tier eval prints): S hands-off, A just confirm, B copy a key, C figure
+    it out, D blocked.
+  - **Configured** (one or two): the setup a user has after signing up. A key the user exports
+    in their shell goes in `env_passthrough: [ACME_API_KEY]`; one from elsewhere goes in `env:`
+    as `ACME_API_KEY: "{{vars.ACME_KEY}}"`, set with `--var ACME_KEY=...`. Or a login the tool
+    keeps in a file, copied in by `install:` (see "Logins and where the agent can write"). Use
+    a staging account or a local mock of the API started in `build:`/`install:`,
     since the tests run locally. The build under test is installed by the test's own `install:`.
     The prompt is still the user's problem; this measures the product's real use, past the
     first contact.
@@ -85,8 +91,8 @@ So write the prompt the way a real person types to their coding agent:
 - **Local build under test**: with `build:` / `install:` (step 4), add "What's installed in
   this folder is the build under test; don't reinstall or upgrade it from the registry."
 - **No sandbox**: the folder is outside the repo and its path names nothing in it, but the
-  agent runs as the user and could still search the disk for the repo. When it should find
-  things on its own, add a check that it never touched the repo (see step 3).
+  agent runs as the user: agents have scanned `~` and read the parent's process list. Every
+  test gets a check that it stayed in its folder (see step 3).
 - **Expected answers the agent must not see** (a seeded password, a generated id): write them to
   `$FIREGOAT_RUN_DIR` in `install:` and read them there in checks. The agent never gets that path.
 
@@ -119,17 +125,25 @@ Prove the outcome and catch cheating:
 - The local build was used, not a registry install (see step 4 for the full guard):
   `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] \$ .*(pip install|npm (install|i) .*acme@)' "$FIREGOAT_TRANSCRIPT"`.
 - Only local docs were used (when that's the point): `test -s "$FIREGOAT_TRANSCRIPT" && ! grep -Eq '^\[[0-9]+\] WebFetch ' "$FIREGOAT_TRANSCRIPT"`.
-- It never touched the repo (`$FIREGOAT_REPO`, the folder holding firegoat.yaml; checks get it,
-  the agent doesn't), which also keeps it out of the repo's `fixtures/`:
+- It stayed in its folder, on every test: the repo's path (`$FIREGOAT_REPO`, the folder holding
+  firegoat.yaml; checks get it, the agent doesn't) appears nowhere in the transcript, neither in
+  a command nor in output it read (a `ps` or a search of `~`). This also keeps it out of the
+  repo's `fixtures/`:
   ```yaml
-  - run: |
-      test -s "$FIREGOAT_TRANSCRIPT" && ! grep -E '^\[[0-9]+\] ' "$FIREGOAT_TRANSCRIPT" | grep -qF "$FIREGOAT_REPO"
+  - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
   ```
+- What the agent told the user: grep only the final answer block, not its prose along the way:
+  ```yaml
+  - run: >-
+      sed -n '/^## final answer/,/^## files/p' "$FIREGOAT_TRANSCRIPT" | grep -qi 'acme_api_key'
+  ```
+  A grep can't tell "use acme" from "don't use acme": what the answer means is the end_goal,
+  judged by a person.
 
 Anchor greps to the transcript's tool-call lines, `^\[[0-9]+\] \$ ` (commands) or
 `^\[[0-9]+\] Write ` etc., not plain words: tool output (a README showing `$ npm install acme`)
 and the agent's prose ("I won't pip install") must not trip a check. To check what the agent
-said, anchor to `^agent: `. Commands appear unescaped, exactly as run, and every line of a
+said along the way, anchor to `^agent: `. Commands appear unescaped, exactly as run, and every line of a
 multi-line command carries the prefix, so one grep covers scripts and heredocs too. Start every negated grep with `test -s "$FIREGOAT_TRANSCRIPT" &&`:
 on a missing file grep exits 2 and `!` turns that into a pass. A check containing `: ` (like
 `'^agent: '`) must be a `run: >-` block (or quoted), else firegoat.yaml is invalid YAML.
@@ -139,7 +153,8 @@ on a missing file grep exits 2 and `!` turns that into a pass. A check containin
 ```yaml
 runs: 1                    # runs per test
 build: npm pack --pack-destination "$FIREGOAT_OUT"   # optional: once per eval, in the repo;
-                           # $FIREGOAT_OUT is first on every test's PATH
+                           # $FIREGOAT_OUT is first on the agent's PATH (unless
+                           # env_passthrough lists PATH)
 install: git config --global user.email eval@example.com
                            # optional: in each fresh workdir before the agent starts,
                            # for every test (zero-start too), before the test's own
@@ -149,6 +164,7 @@ vars:                      # optional: defaults for {{vars.KEY}}; `--var KEY=val
   SHA: main                # build, install, checks and cleanup only, never the agent
 env:                       # optional: the agent's env (also its install, checks, cleanup)
   ACME_TELEMETRY: "off"
+env_passthrough: [HTTPS_PROXY]   # optional: host vars the agent gets, by name
 claude_args: []            # optional: extra claude arguments, one entry each
 tests:
   - name: quickstart       # letters, digits, '.', '_', '-'; unique
@@ -157,9 +173,11 @@ tests:
     end_goal: ...          # judged by you after the run, not by firegoat
     checks:                # optional
       - run: grep -rq some-marker "$FIREGOAT_WORKDIR"
+      - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
     timeout: 600           # optional, seconds
     env:                   # optional: on top of the top-level env:
       ACME_BETA_LOGIN: "1"
+    env_passthrough: [ACME_API_KEY]   # optional: after the top-level ones
     install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
                            # optional: after the top-level install; the build under test
                            # goes here, on the configured tests only
@@ -167,8 +185,10 @@ tests:
     claude_args: [--chrome]                     # optional: e.g. a test that needs a browser
 ```
 
-`env:` is the only way to set env vars for the agent; it never sees `vars:`. Use it for feature
-flags and pointing a tool at the local build. Values are strings (quote numbers) with
+The agent gets none of the shell's env beyond a fixed base (PATH, HOME, USER, locale, claude's
+login vars). `env_passthrough:` hands it host vars by name: a proxy, a CA file, a token the user
+exports. A name the shell doesn't set is a config error. `env:` sets values; the agent never
+sees `vars:`. Use `env:` for feature flags and pointing a tool at the local build. Values are strings (quote numbers) with
 placeholders `{{vars.KEY}}`, `{{run.id}}`, `{{run.n}}`, `{{test.name}}`, plus `$FIREGOAT_OUT`,
 `$FIREGOAT_WORKDIR` and `$FIREGOAT_HOME` (no other `$` expansion, `$HOME` stays literal).
 `PATH`, `CLAUDE_CONFIG_DIR`, `FIREGOAT_*`, `ANTHROPIC_MODEL` (use `model:`), `HOME`, the XDG
@@ -177,7 +197,9 @@ shell that runs eval, not in firegoat.yaml.
 
 Every run gets its own HOME (`$FIREGOAT_HOME`, with XDG dirs; claude keeps the real login), so
 parallel runs don't collide and a tool's state in `~` starts fresh. Only a tool that ignores
-HOME needs `ACME_HOME: "$FIREGOAT_HOME/.acme"`; a fixed port needs `--parallel 1`. Logins in
+HOME needs `ACME_HOME: "$FIREGOAT_HOME/.acme"`. A product that serves on a fixed port must
+have `parallel: 1` in firegoat.yaml, and only one eval may run at a time: two runs on one port
+collide. Logins in
 `~` or the keychain look logged out in a run ("Logins and where the agent can write", below). Stop servers or daemons the agent
 may leave running with `cleanup:`, not a check.
 
@@ -218,15 +240,16 @@ blocks for prompts so colons and quotes stay valid YAML.
 
 Before finishing, re-read the file: it parses as YAML, every test has a non-empty `name`,
 `prompt` and `end_goal`, names are unique and match `^[A-Za-z0-9._-]+$`, no credential values
-appear anywhere, the zero-start test gets no build installed, and every test that writes to a
+appear anywhere, the zero-start test gets no build installed and `env_passthrough: [PATH]`,
+every test checks that it stayed in its folder, and every test that writes to a
 real account uses a test workspace, pinned in `install:` or `env:`, with a check on where its
 writes landed.
 
 ### Logins and where the agent can write
 
 Every run has its own HOME, so a tool whose login is a file (`~/.config/acme/auth.json`) or the
-keychain (`gh`, `docker`) looks logged out in a run. Prefer a token in the env, scoped to a test
-workspace (the shell's env reaches the agent). When the tool only has a browser login, copy the
+keychain (`gh`, `docker`) looks logged out in a run. Prefer a token scoped to a test workspace,
+named in `env_passthrough:` (or set with `env:` and `{{vars.X}}`). When the tool only has a browser login, copy the
 file in from `install:` and delete it in `cleanup:`; the path comes from the shell with `--var`:
 
 ```yaml
@@ -309,7 +332,8 @@ traces are what the user looks at. Put the trace URLs in your report. Use `--no-
 the user asks for it.
 
 **Show the results block first.** Every eval writes the run's results table (each run's status,
-turns, checks, cost and trace URL, the totals and the tier) to
+turns, checks, cost and trace URL, the totals and the checks tier: the share of runs whose
+checks passed, never the end_goal) to
 `.firegoat/runs/<runId>/results.txt` (`runId` is in the `--json` summary); without `--json`, eval
 also prints it last, between two lines of `═`. `cat` it and show it to the user verbatim in a
 fenced code block, before your own grades and analysis. Never paraphrase, redraw or trim it.
@@ -346,8 +370,8 @@ Once a run fails for a real product reason, stop polishing that test: the failur
 ## 6. Hand off and commit
 
 Start with the results block from step 5, verbatim in a code block. Then tell the user in a few
-lines: which tests you added and why, which env vars to export, the
-checks and your grades per run, and where the agent got stuck (quote the transcript).
+lines: which tests you added and why, which env vars to export (the `env_passthrough:` names)
+and `--var`s to pass, the checks and your grades per run, and where the agent got stuck (quote the transcript).
 
 Onboarding is finished when the evals are committed, so the team and CI run the same tests.
 End by asking the user to commit, and offer to do it: "Commit firegoat.yaml to finish
