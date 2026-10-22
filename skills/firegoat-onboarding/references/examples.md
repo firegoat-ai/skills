@@ -17,16 +17,19 @@ The bad prompt hands the agent the answer; the good one is what the user actuall
 
 ### 1. Zero-start (the one test with no context)
 
-Exactly one per suite: no `install:`, no keys, no product name, no docs. It shows how an agent
+Exactly one per suite: nothing installed, no keys, no product name, no docs. It shows how an agent
 meets the product cold, like the [AX tier list](https://firegoat.ai/axlist): does it find Acme,
 can it start without a human, and when it needs a key, do the errors say what to do? Passing
 means solved hands-off, or stopped at the first real blocker with the one step left for the user.
+In a suite with a `build:`, the build's install goes on the configured tests' own `install:`,
+never the top-level one: that runs for zero-start too.
 
 ```yaml
 tests:
   - name: zero-start
     env:
       ACME_API_KEY: ""      # the user's shell may have one; zero-start must not
+    install: '! command -v acme'   # acme installed on this machine would make it warm
     prompt: >-
       I need to run some untrusted Python my users upload, somewhere that isn't my
       machine. Get print('hello from a sandbox') running remotely and show me the output. Keep it minimal.

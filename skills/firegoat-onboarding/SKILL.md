@@ -48,19 +48,25 @@ So write the prompt the way a real person types to their coding agent:
     all. Nothing installed by `install:`, no keys, no docs copied in, no config, no product name
     in the prompt: just the user's problem. The agent inherits the user's shell env, so blank the
     product's key vars in the test's `env:` (`ACME_API_KEY: ""`); its own HOME already hides the
-    user's config files (`~/.config/acme`). It measures what the
+    user's config files (`~/.config/acme`). The build under test must not reach it: top-level
+    `install:` runs for every test, zero-start included, so put the build's install on the
+    configured tests' own `install:`. The agent also inherits the user's PATH; if the product
+    may be installed on this machine, guard it: `install: '! command -v acme'` (a failing
+    install leaves the run not graded instead of quietly warm). It measures what the
     [AX tier list](https://firegoat.ai/axlist) measures: does the agent find the product, can it
     get started without a human (anonymous or claimable access, signing up on its own), and when
     it needs a key, do the errors and docs tell it exactly what to do? end_goal: the problem is
     solved hands-off, or the agent stops at the first real blocker and tells the user the one
     step left (which key, where to get it). In your report, place the run on the tier list's
     scale: S hands-off, A just confirm, B copy a key, C figure it out, D blocked.
-  - **Configured** (one or two): the setup a user has after signing up. Keys in `env:` (a
-    staging account, or a local mock of the API started in `build:`/`install:`, since the tests
-    run locally), the build under test installed by `install:`. The prompt is still the user's
-    problem; this measures the product's real use, past the first contact.
+  - **Configured** (one or two): the setup a user has after signing up. Keys in `env:`, or a
+    login the tool keeps in a file, copied in by `install:` (see "Logins and where the agent can
+    write"). Use a staging account or a local mock of the API started in `build:`/`install:`,
+    since the tests run locally. The build under test is installed by the test's own `install:`.
+    The prompt is still the user's problem; this measures the product's real use, past the
+    first contact.
 - **The context does the pointing**, as in a real project: the package already installed by
-  `install:`, docs copied into the folder, keys in the env. Say "API keys are in the env",
+  `install:`, docs copied into the folder, keys in the env. Say "API keys are in the env" (or "you're logged in to the CLI"),
   without naming the vars (that names the product). Give only what a real user's project would
   already have: don't pre-connect, pre-configure or pre-seed what that user would still have to
   set up (an MCP server, a config file, existing data). That setup is part of the test.
@@ -70,7 +76,8 @@ So write the prompt the way a real person types to their coding agent:
   internals breaks on every schema change and costs rounds of debugging.
 - **Data in a real account piles up.** When `install:` or a check writes to a shared account
   (a staging workspace, a real inbox), every run adds more and later runs see it. Tag what you
-  create with `{{run.id}}` and delete it in `cleanup:`.
+  create with `{{run.id}}` and delete it in `cleanup:`. A seed that outlives the run (in
+  `build:`, or with no `cleanup:`) must check that it exists before creating it.
 - **One outcome per test**, so a failure points at one thing.
 - **Proof, asked for the way a user would**: "show me it works", "send one to me at
   test@example.com", "save a screenshot", so the checks have something to verify.
@@ -132,9 +139,10 @@ on a missing file grep exits 2 and `!` turns that into a pass. A check containin
 ```yaml
 runs: 1                    # runs per test
 build: npm pack --pack-destination "$FIREGOAT_OUT"   # optional: once per eval, in the repo;
-                           # $FIREGOAT_OUT is first on the agent's PATH
-install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
-                           # optional: in each fresh workdir before the agent starts
+                           # $FIREGOAT_OUT is first on every test's PATH
+install: git config --global user.email eval@example.com
+                           # optional: in each fresh workdir before the agent starts,
+                           # for every test (zero-start too), before the test's own
 cleanup: ./delete-seeded-data.sh
                            # optional: after the checks, always; never changes the verdict
 vars:                      # optional: defaults for {{vars.KEY}}; `--var KEY=value` overrides
@@ -152,7 +160,9 @@ tests:
     timeout: 600           # optional, seconds
     env:                   # optional: on top of the top-level env:
       ACME_BETA_LOGIN: "1"
-    install: cp -R "$FIREGOAT_OUT"/v1-app/. .   # optional: after the top-level install
+    install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/*.tgz
+                           # optional: after the top-level install; the build under test
+                           # goes here, on the configured tests only
     cleanup: acme down || true                  # optional: before the top-level cleanup
     claude_args: [--chrome]                     # optional: e.g. a test that needs a browser
 ```
@@ -167,9 +177,9 @@ shell that runs eval, not in firegoat.yaml.
 
 Every run gets its own HOME (`$FIREGOAT_HOME`, with XDG dirs; claude keeps the real login), so
 parallel runs don't collide and a tool's state in `~` starts fresh. Only a tool that ignores
-HOME needs `ACME_HOME: "$FIREGOAT_HOME/.acme"`; a fixed port needs `--parallel 1`. Keychain
-logins (`gh`, `docker`) look logged out in a run: log tools in from `install:` or pass tokens
-in `env:`. Stop servers or daemons the agent may leave running with `cleanup:`, not a check.
+HOME needs `ACME_HOME: "$FIREGOAT_HOME/.acme"`; a fixed port needs `--parallel 1`. Logins in
+`~` or the keychain look logged out in a run ("Logins and where the agent can write", below). Stop servers or daemons the agent
+may leave running with `cleanup:`, not a check.
 
 **Fixtures** (helper scripts, sample data, a fake server the test needs, an MCP config) go in
 files under `fixtures/` next to firegoat.yaml, committed, never inline as heredocs. Copy them once with `build: cp -R fixtures/. "$FIREGOAT_OUT"`, then copy what a
@@ -207,8 +217,48 @@ starter `goat` smoke test from `init`: run it first to confirm the setup works, 
 blocks for prompts so colons and quotes stay valid YAML.
 
 Before finishing, re-read the file: it parses as YAML, every test has a non-empty `name`,
-`prompt` and `end_goal`, names are unique and match `^[A-Za-z0-9._-]+$`, and no credential values
-appear anywhere.
+`prompt` and `end_goal`, names are unique and match `^[A-Za-z0-9._-]+$`, no credential values
+appear anywhere, the zero-start test gets no build installed, and every test that writes to a
+real account uses a test workspace, pinned in `install:` or `env:`, with a check on where its
+writes landed.
+
+### Logins and where the agent can write
+
+Every run has its own HOME, so a tool whose login is a file (`~/.config/acme/auth.json`) or the
+keychain (`gh`, `docker`) looks logged out in a run. Prefer a token in the env, scoped to a test
+workspace (the shell's env reaches the agent). When the tool only has a browser login, copy the
+file in from `install:` and delete it in `cleanup:`; the path comes from the shell with `--var`:
+
+```yaml
+# npx -y firegoat@latest eval --var ACME_LOGIN="$HOME/.config/acme/auth.json"
+install:
+  - install -d -m 700 "$XDG_CONFIG_HOME/acme" && install -m 600 "{{vars.ACME_LOGIN}}" "$XDG_CONFIG_HOME/acme/auth.json"
+  - acme whoami | grep -q "workspace acme-test" || { echo "Refusing, the acme login is not on the acme-test workspace" >&2; exit 1; }
+cleanup: rm -f "$XDG_CONFIG_HOME/acme/auth.json"
+```
+
+Never copy keychain items into a run (that reads a secret out of the user's keychain): pass a
+token, or log a test account in from `install:`. If the tool rotates its refresh token, a run
+can log the user's real login out: copy only the access token if the tool allows it, or use a
+separate test account.
+
+**A login reaches everything its user can see.** There is no sandbox. The agent picks the
+workspace, project or org it finds first, and with the user's own login that can be production.
+One real run registered a test repo in a production workspace, and removing it was manual.
+Before the first eval:
+
+- **Use a dedicated test workspace** (or org, project, account) that holds nothing real. Ask
+  the human for one if it doesn't exist; don't create it yourself.
+- **Prefer a token scoped to that workspace** over the user's personal login, which can write
+  wherever its user can.
+- **Pin the workspace in setup**: in `env:` (`ACME_WORKSPACE: acme-test`) or from `install:`
+  (`acme workspace use acme-test`), and fail `install:` when `whoami` shows anything else. The
+  prompt doesn't name it: the agent should find it the way it would in a user's project.
+- **Check where writes landed**: a check asks the product what the run created (tagged with
+  `{{run.id}}`), finds it in the test workspace and nowhere else the login can see, and
+  `cleanup:` deletes it.
+- If none of that is possible (only a personal login, no test workspace), tell the human which
+  workspaces the login can write to and wait for a go-ahead before running eval.
 
 ### Testing an MCP server
 
