@@ -24,12 +24,13 @@ means solved hands-off, or stopped at the first real blocker with the one step l
 In a suite with a `build:`, the build's install goes on the configured tests' own `install:`,
 never the top-level one: that runs for zero-start too. `env_passthrough: [PATH]` keeps
 `$FIREGOAT_OUT` off its PATH; the user's shell env (their `ACME_API_KEY`) never reaches it.
+If acme is installed globally on this machine, the agent will find it: say so in the report
+(or uninstall it first).
 
 ```yaml
 tests:
   - name: zero-start
     env_passthrough: [PATH]        # the user's PATH, without $FIREGOAT_OUT
-    install: '! PATH="${PATH#"$FIREGOAT_OUT:"}" command -v acme'   # acme installed here would make it warm
     prompt: >-
       I need to run some untrusted Python my users upload, somewhere that isn't my
       machine. Get print('hello from a sandbox') running remotely and show me the output. Keep it minimal.

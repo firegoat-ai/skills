@@ -52,10 +52,8 @@ So write the prompt the way a real person types to their coding agent:
     every test, zero-start included, so put the build's install on the configured tests' own
     `install:`, and give zero-start `env_passthrough: [PATH]`, so `$FIREGOAT_OUT` isn't on its
     PATH and the build can't be run by bare name. That PATH is still the user's: if the product
-    may be installed on this machine, guard it with
-    `install: '! PATH="${PATH#"$FIREGOAT_OUT:"}" command -v acme'` (install's PATH starts with
-    `$FIREGOAT_OUT`, so strip it; a failing install leaves the run not graded instead of quietly
-    warm). It measures what the
+    is installed globally on this machine, the agent will find it, so say so in your report (or
+    have the user uninstall it first). It measures what the
     [AX tier list](https://firegoat.ai/axlist) measures: does the agent find the product, can it
     get started without a human (anonymous or claimable access, signing up on its own), and when
     it needs a key, do the errors and docs tell it exactly what to do? end_goal: the problem is
