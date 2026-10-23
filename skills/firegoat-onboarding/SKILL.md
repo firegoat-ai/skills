@@ -110,12 +110,13 @@ multi-line command or heredoc matches on any line); a tool with a path, url, pat
 `[n] Write <path>` etc. (not the file body: check the file); any other tool, MCP ones included,
 is one line `[n] mcp__<server>__<tool> <json input>` cut at 4000 chars; tool output is indented
 4 spaces (15 lines or 1500 chars), every line of the agent's text and final answer starts with
-`agent: `, then the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
+`agent: `, then the files it made), `FIREGOAT_ANSWER` (`answer.txt`: the agent's final answer
+alone, uncut; empty when it gave none), `FIREGOAT_SESSION` (claude's full session file, JSON,
 ~50x larger, escaped; don't grep it), `FIREGOAT_OUT` (build's outputs, shared by all runs of one eval),
 `FIREGOAT_HOME` (the run's own HOME), `FIREGOAT_RUN_DIR` (the run's folder in the repo,
 hidden from the agent), `FIREGOAT_REPO` (the folder holding firegoat.yaml), any `vars` and the
 run's `env:`. `install:` and `cleanup:`
-get the same, minus the transcript and session.
+get the same, minus the transcript, answer and session (`cleanup:` gets those when the agent ran).
 Prove the outcome and catch cheating:
 - The real thing was used: `grep -Eq '^\[[0-9]+\] \$ (.*[ /])?acme +send' "$FIREGOAT_TRANSCRIPT"`.
   Match the subcommand that does the job, and allow a path before the binary: agents also call it
@@ -130,10 +131,10 @@ Prove the outcome and catch cheating:
   ```yaml
   - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
   ```
-- What the agent told the user: grep only the final answer block, not its prose along the way:
+- What the agent told the user: grep its final answer, `$FIREGOAT_ANSWER`, so a word that shows
+  up only in a command's output or the agent's earlier messages doesn't match:
   ```yaml
-  - run: >-
-      sed -n '/^## final answer/,/^## files/p' "$FIREGOAT_TRANSCRIPT" | grep -qi 'acme_api_key'
+  - run: grep -qi 'acme_api_key' "$FIREGOAT_ANSWER"
   ```
   A grep can't tell "use acme" from "don't use acme": what the answer means is the end_goal,
   judged by a person.
