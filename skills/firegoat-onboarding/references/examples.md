@@ -42,9 +42,7 @@ tests:
       - run: >-
           test -s "$FIREGOAT_TRANSCRIPT" &&
           grep -Eqi 'acme' "$FIREGOAT_TRANSCRIPT"
-      - run: >-
-          sed -n '/^## final answer/,/^## files/p' "$FIREGOAT_TRANSCRIPT" |
-          grep -Eq 'hello from a sandbox|ACME_API_KEY'
+      - run: grep -Eq 'hello from a sandbox|ACME_API_KEY' "$FIREGOAT_ANSWER"
       - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
     timeout: 900
 ```
