@@ -183,6 +183,45 @@ tests:
       - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
 ```
 
+### 8. Updating an old firegoat.yaml
+
+An older file, as `eval --dry-run` sees it: `harness_args` is an unknown key, the build's
+install runs for zero-start too, and zero-start has the build on its PATH.
+
+```text
+build: npm pack --pack-destination "$FIREGOAT_OUT"
+install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/acme-*.tgz
+harness_args: [--chrome]
+tests:
+  - name: zero-start
+    ...
+  - name: send-invoice
+    ...
+```
+
+Updated: same tests, the install moved onto the configured test, the key renamed.
+
+```yaml
+build: npm pack --pack-destination "$FIREGOAT_OUT"
+claude_args: [--chrome]
+tests:
+  - name: zero-start
+    env_passthrough: [PATH]
+    prompt: I need to bill a client for last month's work. Send them an invoice. Keep it minimal.
+    end_goal: >-
+      An invoice is sent through Acme with no human step, or the agent stops at the first
+      blocker and names the one step left.
+    checks:
+      - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
+  - name: send-invoice
+    install: npm init -y >/dev/null && npm install "$FIREGOAT_OUT"/acme-*.tgz
+    prompt: I need to bill a client for last month's work. Send them an invoice. Keep it minimal.
+    end_goal: An invoice is sent with the installed acme package and its id is printed.
+    checks:
+      - run: test -x "$FIREGOAT_WORKDIR/node_modules/.bin/acme"
+      - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
+```
+
 ## Bad
 
 ### No end_goal, no checks
