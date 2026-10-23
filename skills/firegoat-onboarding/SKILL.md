@@ -347,11 +347,11 @@ the runs without starting any: run it first, no need to ask.
 
 **Ask before the first real eval.** Tell the user it runs real agent sessions on their Claude
 subscription (it costs usage), and, when they're logged in to firegoat.ai, uploads every session
-as a private trace unless they pass `--no-upload`. Then run this exact command yourself (it
-works in bash and zsh): no `--json`, output not redirected to a file. A run takes minutes.
+as a private trace unless they pass `--no-upload`. Then run exactly this yourself, with
+nothing piped, appended or redirected and no `--json`. A run takes minutes.
 
 ```sh
-npx -y firegoat@latest eval; echo "exit=$?"
+npx -y firegoat@latest eval
 ```
 
 Run eval without `--no-upload` unless the user asks for it: the uploaded traces are what the user looks at, and
