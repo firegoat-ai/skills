@@ -349,7 +349,7 @@ unless the user asks for it: the uploaded traces are what the user looks at, and
 their URLs. Put the trace URLs in your report.
 
 **Show the results block first.** Every eval writes the run's results table (each run's status,
-turns, checks, cost and trace URL, the totals and the checks tier: the share of runs whose
+checks, turns, tokens, time and trace URL, the totals and the checks tier: the share of runs whose
 checks passed, never the end_goal) to
 `.firegoat/runs/<runId>/results.txt` (`runId` is in the `--json` summary). `eval --json` doesn't
 print the block: `cat` that file. Without `--json`, eval also prints it last, between two lines of
@@ -391,6 +391,8 @@ Once a run fails for a real product reason, stop polishing that test: the failur
 Start with the results block from step 5, verbatim in a code block. Then tell the user in a few
 lines: which tests you added and why, which env vars to export (the `env_passthrough:` names)
 and `--var`s to pass, the checks and your grades per run, and where the agent got stuck (quote the transcript).
+When you compare runs, use tokens, turns and time, never dollars or `cost`: the user runs on
+their own subscription, so a dollar figure misleads.
 
 Onboarding is finished when the evals are committed, so the team and CI run the same tests.
 End by asking the user to commit, and offer to do it: "Commit firegoat.yaml to finish
