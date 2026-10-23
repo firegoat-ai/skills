@@ -49,8 +49,9 @@ tests:
 
 The final-answer check only proves the answer mentions one of them; whether it says the right
 thing about it ("set ACME_API_KEY", not "you don't need ACME_API_KEY") is the end_goal, read by
-you. In the report, give the AX tier the run reached (S hands-off, A just confirm, B copy a key,
-C figure it out, D blocked) and quote the error or doc line that helped or stopped it.
+you. In the report, give its AX tier list placement on its own labeled line (S hands-off, A just
+confirm, B copy a key, C figure it out, D blocked), separate from the checks tier eval prints, and
+quote the error or doc line that helped or stopped it.
 
 ### 2. Problem-first, product found from context
 
@@ -184,7 +185,8 @@ tests:
 ### 8. Updating an old firegoat.yaml
 
 An older file, as `eval --dry-run` sees it: `harness_args` is an unknown key, the build's
-install runs for zero-start too, and zero-start has the build on its PATH.
+install runs for zero-start too, zero-start has the build on its PATH, and a check greps the
+agent's lines in the transcript instead of its final answer.
 
 ```text
 build: npm pack --pack-destination "$FIREGOAT_OUT"
@@ -195,9 +197,13 @@ tests:
     ...
   - name: send-invoice
     ...
+    checks:
+      - run: >-
+          grep -Eq '^agent: .*inv_[a-z0-9]+' "$FIREGOAT_TRANSCRIPT"
 ```
 
-Updated: same tests, the install moved onto the configured test, the key renamed.
+Updated: same tests, the install moved onto the configured test, the key renamed, the check on
+what the agent said moved to `$FIREGOAT_ANSWER`.
 
 ```yaml
 build: npm pack --pack-destination "$FIREGOAT_OUT"
@@ -217,6 +223,7 @@ tests:
     end_goal: An invoice is sent with the installed acme package and its id is printed.
     checks:
       - run: test -x "$FIREGOAT_WORKDIR/node_modules/.bin/acme"
+      - run: grep -Eq 'inv_[a-z0-9]+' "$FIREGOAT_ANSWER"
       - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
 ```
 
