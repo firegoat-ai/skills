@@ -347,9 +347,14 @@ the runs without starting any: run it first, no need to ask.
 
 **Ask before the first real eval.** Tell the user it runs real agent sessions on their Claude
 subscription (it costs usage), and, when they're logged in to firegoat.ai, uploads every session
-as a private trace unless they pass `--no-upload`. Then run plain `npx -y firegoat@latest eval`
-yourself: no `--json`, output not redirected to a file. A run takes minutes. Run eval without
-`--no-upload` unless the user asks for it: the uploaded traces are what the user looks at, and
+as a private trace unless they pass `--no-upload`. Then run this exact command yourself (it
+works in bash and zsh): no `--json`, output not redirected to a file. A run takes minutes.
+
+```sh
+npx -y firegoat@latest eval; echo "exit=$?"
+```
+
+Run eval without `--no-upload` unless the user asks for it: the uploaded traces are what the user looks at, and
 eval prints their URLs. Put the trace URLs in your report; don't `open` them in the user's
 browser unless they ask.
 
@@ -363,7 +368,9 @@ summary) and show that.
 
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). Read the verdict from the exit code and each run's `status`, not from
-the tail of the output. **You judge the end_goal.** For each run, read
+the tail of the output. If every run is not graded for the same outside reason (a usage or
+rate limit, claude not logged in, a harness error), that's an outage, not a result: say so,
+rerun once it's fixed, and report the rerun. **You judge the end_goal.** For each run, read
 `.firegoat/runs/<runId>/<test>/<n>/run.json` (prompt, end_goal, check results, paths), then:
 - `transcript` (a few KB): every command the agent ran with its short output, what it said, its
   final answer and the files it made. Did it reach the end goal with the product, or fake it,
