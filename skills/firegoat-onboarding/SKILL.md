@@ -19,7 +19,7 @@ product the way a new user would.
 
 `README*`, the docs dir (`docs/`, `*.mdx`; quickstarts first), landing copy, package manifests
 (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`) for install names and entry points,
-`examples/`, and an existing `firegoat.yaml` (keep its tests, see step 4). Know: the public docs
+`examples/`, and an existing `firegoat.yaml` (keep its tests, see "Updating existing evals" in step 4). Know: the public docs
 URL, the credentials it needs (env var names only), and whether the tool needs a fixed port or
 starts servers or daemons (step 4).
 
@@ -110,12 +110,13 @@ multi-line command or heredoc matches on any line); a tool with a path, url, pat
 `[n] Write <path>` etc. (not the file body: check the file); any other tool, MCP ones included,
 is one line `[n] mcp__<server>__<tool> <json input>` cut at 4000 chars; tool output is indented
 4 spaces (15 lines or 1500 chars), every line of the agent's text and final answer starts with
-`agent: `, then the files it made), `FIREGOAT_SESSION` (claude's full session file, JSON,
+`agent: `, then the files it made), `FIREGOAT_ANSWER` (`answer.txt`: the agent's final answer
+alone, uncut; empty when it gave none), `FIREGOAT_SESSION` (claude's full session file, JSON,
 ~50x larger, escaped; don't grep it), `FIREGOAT_OUT` (build's outputs, shared by all runs of one eval),
 `FIREGOAT_HOME` (the run's own HOME), `FIREGOAT_RUN_DIR` (the run's folder in the repo,
 hidden from the agent), `FIREGOAT_REPO` (the folder holding firegoat.yaml), any `vars` and the
 run's `env:`. `install:` and `cleanup:`
-get the same, minus the transcript and session.
+get the same, minus the transcript, answer and session (`cleanup:` gets those when the agent ran).
 Prove the outcome and catch cheating:
 - The real thing was used: `grep -Eq '^\[[0-9]+\] \$ (.*[ /])?acme +send' "$FIREGOAT_TRANSCRIPT"`.
   Match the subcommand that does the job, and allow a path before the binary: agents also call it
@@ -130,10 +131,10 @@ Prove the outcome and catch cheating:
   ```yaml
   - run: test -s "$FIREGOAT_TRANSCRIPT" && ! grep -qF "$FIREGOAT_REPO" "$FIREGOAT_TRANSCRIPT"
   ```
-- What the agent told the user: grep only the final answer block, not its prose along the way:
+- What the agent told the user: grep its final answer, `$FIREGOAT_ANSWER`, so a word that shows
+  up only in a command's output or the agent's earlier messages doesn't match:
   ```yaml
-  - run: >-
-      sed -n '/^## final answer/,/^## files/p' "$FIREGOAT_TRANSCRIPT" | grep -qi 'acme_api_key'
+  - run: grep -qi 'acme_api_key' "$FIREGOAT_ANSWER"
   ```
   A grep can't tell "use acme" from "don't use acme": what the answer means is the end_goal,
   judged by a person.
@@ -236,6 +237,21 @@ suffix yours with `-2` on a name collision. Never delete or rewrite user tests, 
 starter `goat` smoke test from `init`: run it first to confirm the setup works, then replace it. Use `>-` folded
 blocks for prompts so colons and quotes stay valid YAML.
 
+### Updating existing evals
+
+When `firegoat.yaml` already exists (written for an older firegoat), bring it up to these rules
+before adding anything:
+
+- **Run `npx -y firegoat@latest eval --dry-run` first.** Old keys are now errors (no aliases):
+  the error names the key and lists the allowed ones. `harness_args:` became `claude_args:`
+  (or `codex_args:` / `grok_args:`, one per harness).
+- **The zero-start test gets `env_passthrough: [PATH]`**, even if it worked before without it.
+- **The build's install goes on the configured tests' own `install:`**, never top-level
+  `install:`, which runs for zero-start too.
+- **Every test checks that it stayed in its folder** (the `$FIREGOAT_REPO` check in step 3).
+- **Keep the tests that still make sense**; only fix their shape. Say in your report what you
+  changed and why.
+
 Before finishing, re-read the file: it parses as YAML, every test has a non-empty `name`,
 `prompt` and `end_goal`, names are unique and match `^[A-Za-z0-9._-]+$`, no credential values
 appear anywhere, the zero-start test gets no build installed and `env_passthrough: [PATH]`,
@@ -321,20 +337,25 @@ starts one, a README or docs page about MCP, or a `@modelcontextprotocol/sdk` (o
 ## 5. Run and grade
 
 firegoat runs the user's `claude` on its existing login. If eval says claude is not logged in,
-ask the human to run `claude` once and log in; don't wait silently. Run
-`npx -y firegoat@latest eval --json` yourself (it prints its version first). A run takes minutes.
+ask the human to run `claude` once and log in; don't wait silently.
 `npx -y firegoat@latest eval --dry-run` validates firegoat.yaml and lists
-the runs without starting any: run it first. Run eval without `--no-upload`: when the user is logged
-in to firegoat.ai, eval uploads every session as a private trace and prints its URL, and those
-traces are what the user looks at. Put the trace URLs in your report. Use `--no-upload` only when
-the user asks for it.
+the runs without starting any: run it first, no need to ask.
+
+**Ask before the first real eval.** Tell the user it runs real agent sessions on their Claude
+subscription (it costs usage), and, when they're logged in to firegoat.ai, uploads every session
+as a private trace unless they pass `--no-upload`. Then run `npx -y firegoat@latest eval --json`
+yourself (it prints its version first). A run takes minutes. Run eval without `--no-upload`
+unless the user asks for it: the uploaded traces are what the user looks at, and eval prints
+their URLs. Put the trace URLs in your report.
 
 **Show the results block first.** Every eval writes the run's results table (each run's status,
 turns, checks, cost and trace URL, the totals and the checks tier: the share of runs whose
 checks passed, never the end_goal) to
-`.firegoat/runs/<runId>/results.txt` (`runId` is in the `--json` summary); without `--json`, eval
-also prints it last, between two lines of `═`. `cat` it and show it to the user verbatim in a
-fenced code block, before your own grades and analysis. Never paraphrase, redraw or trim it.
+`.firegoat/runs/<runId>/results.txt` (`runId` is in the `--json` summary). `eval --json` doesn't
+print the block: `cat` that file. Without `--json`, eval also prints it last, between two lines of
+`═`: paste what's between them. Show it to the user verbatim in a fenced code block, before your
+own grades and analysis. Not the stderr log or the PASS/FAIL lines, not your own table. Never
+paraphrase, redraw or trim it.
 
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). Read the verdict from the exit code and each run's `status`, not from
