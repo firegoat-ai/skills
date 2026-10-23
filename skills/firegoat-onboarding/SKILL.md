@@ -58,9 +58,10 @@ So write the prompt the way a real person types to their coding agent:
     get started without a human (anonymous or claimable access, signing up on its own), and when
     it needs a key, do the errors and docs tell it exactly what to do? end_goal: the problem is
     solved hands-off, or the agent stops at the first real blocker and tells the user the one
-    step left (which key, where to get it). In your report, place the run on the AX tier list's
-    scale (not the checks tier eval prints): S hands-off, A just confirm, B copy a key, C figure
-    it out, D blocked.
+    step left (which key, where to get it). In your report, give the run its AX tier list
+    placement (S hands-off, A just confirm, B copy a key, C figure it out, D blocked), labeled
+    "AX tier list placement" in its own line under the zero-start grade, never as "tier" next
+    to the checks tier eval prints: they are different scales.
   - **Configured** (one or two): the setup a user has after signing up. A key the user exports
     in their shell goes in `env_passthrough: [ACME_API_KEY]`; one from elsewhere goes in `env:`
     as `ACME_API_KEY: "{{vars.ACME_KEY}}"`, set with `--var ACME_KEY=...`. Or a login the tool
@@ -249,6 +250,9 @@ before adding anything:
 - **The build's install goes on the configured tests' own `install:`**, never top-level
   `install:`, which runs for zero-start too.
 - **Every test checks that it stayed in its folder** (the `$FIREGOAT_REPO` check in step 3).
+- **Checks on what the agent said move to `"$FIREGOAT_ANSWER"`** (firegoat 0.34+):
+  `grep '^agent:' "$FIREGOAT_TRANSCRIPT"` and similar become a grep of `"$FIREGOAT_ANSWER"`,
+  the final answer alone.
 - **Keep the tests that still make sense**; only fix their shape. Say in your report what you
   changed and why.
 
@@ -343,23 +347,23 @@ the runs without starting any: run it first, no need to ask.
 
 **Ask before the first real eval.** Tell the user it runs real agent sessions on their Claude
 subscription (it costs usage), and, when they're logged in to firegoat.ai, uploads every session
-as a private trace unless they pass `--no-upload`. Then run `npx -y firegoat@latest eval --json`
-yourself (it prints its version first). A run takes minutes. Run eval without `--no-upload`
-unless the user asks for it: the uploaded traces are what the user looks at, and eval prints
-their URLs. Put the trace URLs in your report.
+as a private trace unless they pass `--no-upload`. Then run plain `npx -y firegoat@latest eval`
+yourself: no `--json`, output not redirected to a file. A run takes minutes. Run eval without
+`--no-upload` unless the user asks for it: the uploaded traces are what the user looks at, and
+eval prints their URLs. Put the trace URLs in your report; don't `open` them in the user's
+browser unless they ask.
 
-**Show the results block first.** Every eval writes the run's results table (each run's status,
+**Show the results block first.** eval's last output is the results block (each run's status,
 checks, turns, tokens, time and trace URL, the totals and the checks tier: the share of runs whose
-checks passed, never the end_goal) to
-`.firegoat/runs/<runId>/results.txt` (`runId` is in the `--json` summary). `eval --json` doesn't
-print the block: `cat` that file. Without `--json`, eval also prints it last, between two lines of
-`═`: paste what's between them. Show it to the user verbatim in a fenced code block, before your
-own grades and analysis. Not the stderr log or the PASS/FAIL lines, not your own table. Never
-paraphrase, redraw or trim it.
+checks passed, never the end_goal), between two lines of `═`. Show what's between them to the
+user verbatim in a fenced code block, before your own grades and analysis. Not the stderr log or
+the PASS/FAIL lines, not your own table. Never paraphrase, redraw or trim it. If you used `--json`
+anyway, it doesn't print the block: `cat .firegoat/runs/<runId>/results.txt` (`runId` is in the
+summary) and show that.
 
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). Read the verdict from the exit code and each run's `status`, not from
-the tail of the output: a cut-off `--json` shows only the last run. **You judge the end_goal.** For each run, read
+the tail of the output. **You judge the end_goal.** For each run, read
 `.firegoat/runs/<runId>/<test>/<n>/run.json` (prompt, end_goal, check results, paths), then:
 - `transcript` (a few KB): every command the agent ran with its short output, what it said, its
   final answer and the files it made. Did it reach the end goal with the product, or fake it,
@@ -367,8 +371,9 @@ the tail of the output: a cut-off `--json` shows only the last run. **You judge 
   and you need it.
 - `workdir`: the files it made. Run them if that's how the end goal is proven. Each criterion in it: met or not, with the evidence.
 
-firegoat records no verdict beyond the checks: keep your grades yourself (per run: pass/fail
-and the evidence). A run can pass its checks and still fail the end goal (e.g. it hard-coded the
+firegoat records no verdict beyond the checks: keep your grades yourself (per run: end_goal
+met or not, and the evidence). Don't put a second grade or tier of your own next to the checks
+tier; the zero-start AX tier list placement (step 2) is labeled as such, on its own line. A run can pass its checks and still fail the end goal (e.g. it hard-coded the
 output, or solved the problem with a competitor); say so.
 
 **Aim for evals that fail.** A suite that passes on the first try measures nothing: the point is
