@@ -10,7 +10,7 @@ Every run executes on a **harness · model** combo: the harness is the coding ag
 The only combos the queue accepts:
 | Harness | Models |
 |---|---|
-| `claude-code` | claude-opus-5-5 (Opus 5.5), claude-opus-5 (Opus 5), claude-opus-4-8 (Opus 4.8), claude-opus-4-6 (Opus 4.6), claude-sonnet-4-6 (Sonnet 4.6), claude-sonnet-5-5 (Sonnet 5.5), claude-sonnet-5 (Sonnet 5), claude-haiku-5-5 (Haiku 5.5), claude-haiku-4-5-20251001 (Haiku 4.5), claude-fable-5-1 (Fable 5.1), claude-fable-5 (Fable 5) |
+| `claude-code` | claude-opus-5-5 (Opus 5.5), claude-opus-5 (Opus 5), claude-opus-4-8 (Opus 4.8), claude-opus-4-6 (Opus 4.6), claude-sonnet-4-6 (Sonnet 4.6), claude-sonnet-5-5 (Sonnet 5.5), claude-sonnet-5 (Sonnet 5), claude-opus-5-5[1m] (Opus 5.5 (1M)), claude-sonnet-5-5[1m] (Sonnet 5.5 (1M)), claude-sonnet-5[1m] (Sonnet 5 (1M)), claude-haiku-5-5 (Haiku 5.5), claude-haiku-4-5-20251001 (Haiku 4.5), claude-fable-5-1 (Fable 5.1), claude-fable-5 (Fable 5) |
 | `codex` | openai/gpt-5.5 (GPT-5.5), openai/gpt-5.6 (GPT-5.6), openai/gpt-5.6-sol (GPT-5.6 Sol), openai/gpt-5.6-terra (GPT-5.6 Terra), openai/gpt-5.6-luna (GPT-5.6 Luna) |
 | `opencode` | openai/gpt-5.5 (GPT-5.5), openai/gpt-5.6 (GPT-5.6), anthropic/claude-opus-4-8 (Opus 4.8), anthropic/claude-opus-4-6 (Opus 4.6), xai/grok-4.3 (Grok 4.3), xai/grok-4.5 (Grok 4.5), xai/grok-4.6 (Grok 4.6), xai/grok-4.7 (Grok 4.7) |
 | `openclaw` | openai/gpt-5.5 (GPT-5.5), openai/gpt-5.6 (GPT-5.6) |
@@ -18,6 +18,8 @@ The only combos the queue accepts:
 | `fx` | vercel_ai_gateway/anthropic/claude-sonnet-4.5 (Sonnet 4.5), vercel_ai_gateway/anthropic/claude-opus-4.6 (Opus 4.6) |
 | `v0` | v0/v0-mini (v0 Mini), v0/v0-pro (v0 Pro), v0/v0-max (v0 Max) |
 | `grok-build` | grok-build-0.1 (Grok Build 0.1) |
+
+A `[1m]` id runs the same model with a 1M-token context window: Claude Code budgets a bare id at 200k and auto-compacts past that.
 
 Default when nothing is pinned: `claude-code` + `claude-opus-4-8`.
 
