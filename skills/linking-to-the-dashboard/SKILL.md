@@ -4,16 +4,16 @@ description: Use when citing a run, prompt, or trace moment in your answer — a
 ---
 # Linking to the dashboard
 
-Every run, prompt, and trace turn has a canonical dashboard page. When you cite one in an answer, give the full clickable URL — a bare slug or uuid forces the reader to hunt. The base URL is `https://2027.dev/evals` (`BASE_URL` in `lib/url.ts`).
+Every run, prompt, and trace turn has a canonical dashboard page. When you cite one in an answer, give the full clickable URL — a bare slug or uuid forces the reader to hunt. The base URL is `https://firegoat.ai/evals` (`BASE_URL` in `lib/url.ts`).
 
 ## Link formats
 With `{orgDomain}` = the org's domain (e.g. `mastra.ai`):
-- Prompt detail: `https://2027.dev/evals/{orgDomain}/prompts/{promptId}` (promptId is a uuid)
-- Report overview: `https://2027.dev/evals/{orgDomain}/reports/{slug}`
-- Full report: `https://2027.dev/evals/{orgDomain}/reports/{slug}/report`
-- Trace with turn anchor: `https://2027.dev/evals/{orgDomain}/reports/{slug}/trace#turn-{N}`
-- Run status (in-flight): `https://2027.dev/evals/{orgDomain}/runs/{runId}`
-- Org home: `https://2027.dev/evals/{orgDomain}`
+- Prompt detail: `https://firegoat.ai/evals/{orgDomain}/prompts/{promptId}` (promptId is a uuid)
+- Report overview: `https://firegoat.ai/evals/{orgDomain}/reports/{slug}`
+- Full report: `https://firegoat.ai/evals/{orgDomain}/reports/{slug}/report`
+- Trace with turn anchor: `https://firegoat.ai/evals/{orgDomain}/reports/{slug}/trace#turn-{N}`
+- Run status (in-flight): `https://firegoat.ai/evals/{orgDomain}/runs/{runId}`
+- Org home: `https://firegoat.ai/evals/{orgDomain}`
 
 ## `#turn-N` anchors
 `N` is the turn's **1-based `index` field** returned by `get_trace` — NOT the 0-based `offset` parameter. Don't confuse them.

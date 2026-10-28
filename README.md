@@ -1,8 +1,8 @@
 # Firegoat Skills
 
-Open-source [Claude Code](https://claude.com/claude-code) skills for building software that **AI agents** can actually use — by the team behind [2027.dev](https://2027.dev), where we run real agents through 100+ dev tools and score their experience.
+Open-source [Claude Code](https://claude.com/claude-code) skills for building software that **AI agents** can actually use — by the team behind [Firegoat](https://firegoat.ai), where we run real agents through 100+ dev tools and score their experience.
 
-Each skill is a self-contained folder under [`skills/`](./skills). This repo is the single source for every 2027 skill, including the product skills the [2027.dev evals](https://2027.dev/evals) dashboard installs.
+Each skill is a self-contained folder under [`skills/`](./skills). This repo is the single source for every Firegoat skill, including the product skills the [Firegoat evals](https://firegoat.ai/evals) dashboard installs.
 
 ## Skills
 
@@ -16,9 +16,9 @@ Each skill is a self-contained folder under [`skills/`](./skills). This repo is 
 
 _More coming — discoverability, agent-friendly docs, SDK design._
 
-### 2027 evals product skills
+### Firegoat evals product skills
 
-These teach your agent to work with your [2027.dev evals](https://2027.dev/evals) data through the 2027 evals MCP server: reading scores, traces, and friction.
+These teach your agent to work with your [Firegoat evals](https://firegoat.ai/evals) data through the Firegoat evals MCP server: reading scores, traces, and friction.
 
 | Skill | What it does |
 |---|---|
@@ -64,8 +64,8 @@ Then in Claude Code each skill loads automatically when it's relevant — or inv
 
 ## See where a real agent gets stuck in your product
 
-These skills fix what you can grep for. To see where a real agent actually gets stranded in *your* onboarding — and how you rank against 135 other dev tools — check out the **[agent arena](https://2027.dev/arena)** and **submit a tool eval request**.
+These skills fix what you can grep for. To see where a real agent actually gets stranded in *your* onboarding — and how you rank against 135 other dev tools — check out the **[agent arena](https://firegoat.ai/arena)** and **submit a tool eval request**.
 
 ## License
 
-MIT © [2027.dev](https://2027.dev)
+MIT © [Firegoat](https://firegoat.ai)

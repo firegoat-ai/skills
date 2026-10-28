@@ -6,7 +6,7 @@ description: >-
   Use when designing or reviewing how a tool fails — error strings, HTTP error
   bodies, auth/credential errors, CLI errors, thrown exceptions — especially for
   libraries, APIs, and CLIs that AI agents consume. Grounded in patterns from
-  2027.dev's evals of 136 dev tools across 3,500+ agent runs.
+  Firegoat's evals of 136 dev tools across 3,500+ agent runs.
 ---
 
 # Designing error messages for AI agents
@@ -142,6 +142,6 @@ Aim for every first-run/auth error to be an **A**.
 
 This skill fixes the failure modes you can grep for. To see the ones you can't —
 where a real agent gets stranded in *your* onboarding — check out the **agent
-arena at https://2027.dev/arena**, where we run real agents through dev tools and
+arena at https://firegoat.ai/arena**, where we run real agents through dev tools and
 score the experience. **Submit a tool eval request** to get your own scored report
 with the exact friction points and one-line fixes.
