@@ -1,4 +1,4 @@
-# 2027 Skills
+# Firegoat Skills
 
 Open-source [Claude Code](https://claude.com/claude-code) skills for building software that **AI agents** can actually use — by the team behind [2027.dev](https://2027.dev), where we run real agents through 100+ dev tools and score their experience.
 
