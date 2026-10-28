@@ -1,6 +1,6 @@
 ---
 name: evaluating-mcp-servers
-description: Use when building an eval for an MCP server (yours or a competitor's) on 2027 evals: writing the task, registering the server in the sandbox, picking the harness, writing checks, verifying the result independently, or comparing several MCP servers on the same task.
+description: Use when building an eval for an MCP server (yours or a competitor's) on Firegoat evals: writing the task, registering the server in the sandbox, picking the harness, writing checks, verifying the result independently, or comparing several MCP servers on the same task.
 ---
 # Evaluating MCP servers
 
