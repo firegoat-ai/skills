@@ -138,7 +138,9 @@ Prove the outcome and catch cheating:
   - run: grep -qi 'acme_api_key' "$FIREGOAT_ANSWER"
   ```
   A grep can't tell "use acme" from "don't use acme": what the answer means is the end_goal,
-  judged by a person.
+  judged by a person. Grep one token the product requires (a key name, a file, a command, a
+  URL), never a phrase: agents word the same right answer many ways, and a check that wants
+  your wording fails runs that reached the goal.
 
 Anchor greps to the transcript's tool-call lines, `^\[[0-9]+\] \$ ` (commands) or
 `^\[[0-9]+\] Write ` etc., not plain words: tool output (a README showing `$ npm install acme`)
@@ -366,6 +368,9 @@ the PASS/FAIL lines, not your own table. Never paraphrase, redraw or trim it. If
 anyway, it doesn't print the block: `cat .firegoat/runs/<runId>/results.txt` (`runId` is in the
 summary) and show that.
 
+When a check fails, read the run's `transcript` before blaming the product: a check that is too
+strict is a bug in the eval. Fix the check, rerun, and say so in your report.
+
 firegoat runs only the script checks; they set the exit code (0 pass, 1 a check failed, 2 not
 graded, 3 config error). Read the verdict from the exit code and each run's `status`, not from
 the tail of the output. If every run is not graded for the same outside reason (a usage or
@@ -397,6 +402,10 @@ those pass too, make the passing tests harder and run eval again, at most twice:
 Keep each end goal reachable with the product as documented: a test that fails because the
 task is impossible tells the user nothing. Report which tests you hardened and why.
 Once a run fails for a real product reason, stop polishing that test: the failure is the result.
+
+`runs: 1` gives one sample per test: good for drafting, not a rate. Once the tests are settled,
+rerun with `--runs 3` or more before you report a share of runs, and say how many runs
+each result is based on.
 
 ## 6. Hand off and commit
 
