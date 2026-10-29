@@ -30,6 +30,7 @@ These teach your agent to work with your [Firegoat evals](https://firegoat.ai/ev
 | [`harnesses-and-models`](./skills/harnesses-and-models) | Work out which coding agent and model ran an eval, compare across them, or pin one for a run. |
 | [`suggesting-eval-prompts`](./skills/suggesting-eval-prompts) | Write eval prompts that measure the agent experience of a real end goal. |
 | [`evaluating-mcp-servers`](./skills/evaluating-mcp-servers) | Build an eval for an MCP server: register it in the sandbox, write the task and checks, verify the result yourself, and compare servers head to head. |
+| [`team-findings-messages`](./skills/team-findings-messages) | Write eval findings as a short message to the evaluated company's engineers: the setup, the most important verified findings with linked trace turns, a fix their team controls for each, and a next step. |
 | [`linking-to-the-dashboard`](./skills/linking-to-the-dashboard) | Cite runs, prompts, and trace moments as clickable dashboard links. |
 | [`filing-feedback`](./skills/filing-feedback) | Report a platform bug, confusing behaviour, or missing feature through `send_feedback`. |
 
