@@ -27,6 +27,7 @@ Hi team, here's our <Month> product update 👋
 
 ## Each feature is a linked one-liner
 - Make each one sound exciting and invite them to try it. Vary how bullets open; never start every bullet the same way. Mix forms like "We shipped X, check it out here", "X is live", "You can now…", "Meet X", "Ever wondered why a run failed? …".
+- Name the delta: what they get now that they didn't before. "See the judge's reasoning, not just its verdict" beats "Ever wondered why a run passed or failed?", because they could already see pass/fail. Use the "X, not just Y" shape when a feature deepens something they already had. Skip rhetorical questions unless the answer is the new thing.
 - Describe the benefit, not the mechanism. Good: "You can now get evals on your docs PRs that only run when the PR touches what a prompt tests." Bad: "If your PR can't change what a prompt tests, the eval is skipped."
 - Link the feature name to the exact place it lives in the product, not the dashboard home: "Paths tab" links to the Paths tab, "install the MCP" links to the install page. Use Slack's `<url|text>` format, no bare URLs.
 - Lead with what took up the month, not what merged in the last few days. Look at everything that shipped since the last update before picking.
