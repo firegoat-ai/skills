@@ -9,7 +9,7 @@ The reader is the company's engineers. They know who we are but haven't seen our
 ## Shape of the message
 1. **Opening line.** Say in plain words what each task asked the agent to do, plus harness/model and pass/fail. Good: "We asked Claude Code (Opus 5.5) to list all 100 members on GitHub's rust-lang people page using only Apify's MCP. It passed." Bad: "We ran the rust-lang-people eval."
 2. **Headline.** One sentence naming their product surface and the gap between passing checks and what the traces show, e.g. "Checks passed, but the agent never used the Actor it loaded."
-3. **Findings, max 3.** Rank by impact on their product. Merge findings that share a root cause. If agents bypassed their core product (scraped the page directly, used another tool), lead with that.
+3. **Findings, max 3.** Pick the most important ones and rank them by impact on their product, not by the order they happened in the trace. An early hiccup that cost one retry goes below (or out of the message for) a late failure that made the agent abandon their product. Merge findings that share a root cause. If agents bypassed their core product (scraped the page directly, used another tool), lead with that.
 4. **Each finding:**
    - **Bold one-line claim.**
    - Evidence with exact numbers and a dashboard link to the exact trace turn (see the linking-to-the-dashboard skill).
@@ -23,8 +23,10 @@ Keep it under 200 words. No preamble, no sign-off, no internal footers (run ids,
 - Be precise with verbs: "loaded a tool" is not "called it"; "inferred the URL from page links" is not "guessed it".
 - Before saying a better alternative exists (another Actor, endpoint, or flag), check it actually fits this task's inputs and output.
 
-## Name the layer
-For each issue, say which layer caused it: our harness/client (sandbox, MCP client, model) or their product (docs, API, MCP server, error messages). Only ask them to fix their layer. If the cause was ours, leave it out or say so in one clause, without a fix request.
+## Only report friction they can influence
+For each issue, work out which layer caused it: our harness/client (sandbox, MCP client, model, network) or their product (docs, API, MCP server, tool descriptions, error messages, dashboard). Only report friction their team can actually change. If the cause sits in our layer or a third party's (e.g. GitHub rate limits, the model misreading a clear response), drop it from the message, even if it was the most visible problem in the trace. A finding without a fix they control doesn't belong in the message.
+
+When a finding is theirs, name the layer in the claim so they know where to look ("the MCP tool description", "the Actor's input schema").
 
 ## Call out friction the metrics hide
 "0 errors" and a pass can hide a workaround: the agent hit a dead end, then switched tools, fell back to raw HTTP, or rebuilt data by hand. Those are often the most useful findings. Say what the agent worked around and point to the turn where it changed course.
@@ -39,6 +41,7 @@ Never give a bare ordered list and leave the reader to infer priority or effort.
 
 ## Before sending
 - Opening line says what the task was, harness/model, pass/fail.
-- 3 findings or fewer, each with claim, linked evidence, and one fix in their control.
+- 3 findings or fewer, ranked by importance (not trace order), each with claim, linked evidence, and one fix in their control.
+- Nothing caused by our harness, the model, or a third party.
 - Every number re-checked; no merged phases; no "called" where it was "loaded".
 - Under 200 words.
