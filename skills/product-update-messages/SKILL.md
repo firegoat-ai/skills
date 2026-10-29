@@ -1,66 +1,76 @@
 ---
 name: product-update-messages
-description: Use when writing a product update about what Firegoat shipped for a customer's shared Slack channel (or email), so every shipped feature is linked to where it lives in the product and the update ends with concrete offers to use it.
+description: Use when writing a product update about what Firegoat shipped, posted by the Slack bot to customer channels (or sent as an email), so every shipped feature is linked to where it lives in the product and the update ends with offers the bot can act on.
 ---
 # Writing product updates
 
-The reader is a team that already uses Firegoat evals. They want to know what they can do now that they couldn't last month, and where to click to try it. Write from the founder's voice: warm, short, specific.
+The reader is a team that already uses Firegoat evals. They want to know what they can do now that they couldn't last month, and where to click to try it. One general update goes to every channel; don't personalize it per team.
 
-## Template
+## Slack format
+Post a short main message, then put everything else in a thread reply under it.
+
+Main post (about 120 words):
 ```
-Hi <team>, quick update on what we shipped in <month>: <one-line theme, e.g. "you can now see the route agents take through your product">.
+<One line: the most useful thing we shipped, and what it lets them do.>
 
-*<Feature name>*
-<What it lets them do, in one or two sentences.> <Where it lives: "Every prompt has a new <Paths tab|link>".> <Optional: why we built it, e.g. "Many of you asked for this".>
+• *<url|Feature name>*: <what they can do with it, one line>
+• *<url|Feature name>*: <one line>
+• *<url|Feature name>*: <one line>
 
-*<Feature name>*
-...
+<One or two offers the bot can act on.> More in the thread 🧵
+```
+
+Thread reply:
+```
+• *<url|Feature name>*: <one line>   (features 4 and 5, if any)
 
 *Coming soon*
 • <item>
-• <item>
 
-Want me to <offer tied to feature 1>? Or <offer tied to feature 2>?
+*More from us*
+• <url|Blog post, talk or event>: <one line>
+
+Anything we should build next? Reply here. Mika and the Firegoat team
 ```
 
+- The first line is what people see in the channel before opening it. Lead with the most useful feature, not "Hi team, quick update".
+- Up to 3 features in the main post, up to 5 in total, most useful first.
+- Post with `unfurl_links: false` so a list of links doesn't turn into a wall of preview cards.
+- Never use @channel or @here.
+- If little shipped this cycle, skip the update rather than post a thin one.
+
 ## Link everything that shipped
-Every shipped feature gets a link to the exact place it lives in the product, not to the dashboard home. "Paths tab" links to that prompt's Paths tab, "Settings" links to Settings, "install the MCP" links to the install page. If the reader would have to hunt for it, the link is wrong.
-- Link the words that name the feature or the click path ("Prompt → Configure"), not a bare URL on its own line.
-- When the update is for one team's channel, link into their own data: their prompt, their run, their Insights tab (see the linking-to-the-dashboard skill).
-- Posts, talks and events get links too (blog post, recording, event page).
-- In Slack, use `<url|text>` links. Never paste the same URL twice.
-- If a feature has no page to link to yet, say how to get it instead ("reply here and we'll turn it on").
+Every shipped feature gets a link to the exact place it lives in the product, not to the dashboard home. "Paths tab" links to the Paths tab, "Settings" links to Settings, "install the MCP" links to the install page. If the reader would have to hunt for it, the link is wrong.
+- Link the feature name or the click path ("Prompt → Configure"), using Slack's `<url|text>` format. No bare URLs.
+- Posts, talks and events get links too.
+- If a feature has no page to link to yet, say how to get it ("reply here and we'll turn it on").
 
 ## Each feature
-- Bold name, then what the reader can do with it, not how we built it. "Run any prompt across 28 agent and model combinations" beats "added harness support".
-- Say where it is in the product (tab, page, button) and link it.
+- Say what the reader can do with it, not how we built it. "Run any prompt across 28 agent and model combinations" beats "added harness support".
 - Use real numbers when we have them, with the comparison: "28 combinations, up from 20 in August".
-- Credit the ask when it came from customers: "Many of you asked for it", "You raised variance between runs: we heard you".
-- Up to 5 features, most useful first. Group small related changes under one heading (e.g. Scenarios, Checks and persona instructions under "Prompt flexibility").
+- Credit the ask when it came from customers: "Many of you asked for it".
+- Group small related changes under one bullet (e.g. Scenarios, Checks and persona instructions as "Prompt flexibility").
 
-## Beyond features (optional)
-- *Coming soon*: 2 or 3 bullets, each one line. Only things we're actually building.
-- *More from us*: a blog post, talk, or event, each linked. One line each.
+## Offers the bot can act on
+End the main post with one or two offers tied to what shipped, phrased so a reply triggers the action:
+- New models → "Reply *rerun* and I'll run your prompts on Opus 5.5 and Fable 5.1."
+- Competitor benchmarking → "Want me to add a competitor to one of your prompts? Reply with the name."
+- Scenarios or Checks → "Reply *checks* and I'll suggest checks for your prompts."
+- An integration (GitHub app, MCP) → "Want the install link for whoever owns your docs repo?"
 
-## Close with offers, not just "thoughts?"
-End with one or two specific offers based on what shipped, phrased as questions the bot can act on if they say yes:
-- New models shipped → "Want me to rerun your getting-started prompt on Opus 5.5 and Fable 5.1?"
-- Competitor benchmarking shipped → "Want me to add <competitor> to your <prompt> so you can see where you lead?"
-- Scenarios or Checks shipped → "Want me to draft a scenario for your CLI path, or suggest checks for <prompt>?"
-- An integration shipped (GitHub app, MCP, Slack) → "Want me to send the install link to whoever owns your docs repo?"
-
-Tailor the offers to the channel's team when you have their data (their prompts, competitors, recent runs). Then one line inviting replies: "Anything we should build next? Reply here."
+Only offer what the bot can actually do from a reply.
 
 ## Voice
-- Open with one sentence, then go straight to features. No long intro about what Firegoat is.
-- Plain words, short paragraphs, a few emoji at most.
+- Plain words, one line per item, a few emoji at most.
+- The bot speaks for the team. No founder signature block, no "set up a shared Slack" invite.
 - Always "Firegoat", never "2027" or "2027.dev". No em dashes; use a colon, comma or new sentence.
-- Slack: no merge tags, no signature block, no unsubscribe footer. Under 250 words for the core update.
 
-## Before sending
+## Email version
+The monthly email can carry the same content at full length: a greeting, a short section per feature with its link and a button, Coming soon, More from us, and a "Thoughts? Reply directly" close signed by Mika. Same linking and voice rules.
+
+## Before posting
+- Main post leads with the most useful feature, has 3 features or fewer, and is about 120 words.
 - Every shipped feature, post and event is linked to its exact page.
-- Each feature says what the reader can do and where to click.
 - Numbers are real and have a comparison point.
-- Up to 5 features, most useful first.
-- Ends with one or two specific offers tied to what shipped.
-- No em dashes, no "2027".
+- One or two offers the bot can act on from a reply.
+- Link previews off, no @channel, no em dashes, no "2027".
