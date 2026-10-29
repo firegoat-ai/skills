@@ -1,0 +1,76 @@
+---
+name: team-findings-messages
+description: Use when writing up eval findings as a message to the evaluated company's team (e.g. a Slack post to Apify's devs), so their engineers get a short, verified, actionable read of what the traces show.
+---
+# Writing findings messages to company teams
+
+The reader is the company's engineers. They know who we are but haven't seen our eval prompts, harness, or dashboard. Skip any intro about Firegoat and get straight to what their product did.
+
+## Template
+```
+Setup: We asked <harness> (<model>) to <task in plain words> using only <their product>. <Passed/failed> (<run link>). Prompt: <prompt link>
+
+<Headline>
+
+1. <One-sentence claim>
+   Evidence: <exact numbers>, <turn link>
+   Fix: <one change their team controls>
+2. ...
+
+Want me to <specific next step based on the findings>?
+```
+
+## Setup
+State what we tested before anything else:
+- What the prompt asked, in plain words. Good: "list all 100 members on GitHub's rust-lang people page using only Apify's MCP". Bad: "the rust-lang-people eval".
+- A link to the prompt, since they've never seen it.
+- Harness and model.
+- Pass/fail, with a link to each run. One line per run if there are several.
+
+## Headline
+One sentence naming their product surface and the gap between passing checks and what the traces show, e.g. "Checks passed, but the agent never used the Actor it loaded."
+
+## Findings
+Every finding must clear this bar:
+1. Caused by their product (docs, API, MCP server, tool descriptions, error messages, dashboard), not by our harness, the model, or a third party.
+2. Has a fix their team controls.
+3. Has a different root cause from every other finding. Merge findings that share one.
+4. Backed by a link to the exact trace turn.
+
+Default to 3. Go up to 5 only when the extra findings clear the same bar. Never pad: if one finding clears the bar, send one.
+
+Rank by impact on their product, not by the order things happened in the trace. An early hiccup that cost one retry goes below (or out of the message for) a late failure that made the agent abandon their product. If agents bypassed their core product (scraped the page directly, used another tool), lead with that.
+
+Each finding has three parts, with the fix directly under its evidence so engineers can reply to and claim one finding at a time:
+- **Claim:** one sentence, one claim. Bold is fine for skimming but not required. Name the layer so they know where to look ("the MCP tool description", "the Actor's input schema").
+- **Evidence:** exact numbers, each linked to the turn it came from (see the linking-to-the-dashboard skill). If a number has no turn to link, leave it out.
+- **Fix:** one change their team can ship.
+
+## Only claim what the traces prove
+- Verify every number against the trace (see the reading-an-agent-trace skill). Recount tool calls, errors, pages, and items yourself.
+- Don't merge separate phases into one claim. "3 failed calls during auth, then 2 retries on pagination" is not "5 failed calls fetching data".
+- Be precise with verbs: "loaded a tool" is not "called it"; "inferred the URL from page links" is not "guessed it".
+- Before saying a better alternative exists (another Actor, endpoint, or flag), check it actually fits this task's inputs and output.
+
+## Only report friction they can influence
+If the cause sits in our layer (sandbox, MCP client, model, network) or a third party's (e.g. GitHub rate limits), drop it from the message, even if it was the most visible problem in the trace. A finding without a fix they control doesn't belong in the message.
+
+## Call out friction the metrics hide
+"0 errors" and a pass can hide a workaround: the agent hit a dead end, then switched tools, fell back to raw HTTP, or rebuilt data by hand. Those are often the most useful findings. Say what the agent worked around and link the turn where it changed course.
+
+## Effort labels (optional)
+If you include effort, label each fix rather than relying on list order:
+- **quick**: docs or text change (tool description, error message, README)
+- **small**: a new field in a response or schema
+- **medium**: a new parameter or behavior
+
+## Close with a next step
+End with one line offering a next step tied to the findings, e.g. "Want me to rerun this on Codex and Gemini to see if the bypass is model-specific?" or "Want a prompt that tests pagination on its own?" One or two offers, not a menu.
+
+## Before sending
+- Setup has the task in plain words, prompt link, harness/model, and pass/fail with run links.
+- Every finding clears the bar; 3 by default, 5 at most; ranked by importance, not trace order.
+- Each finding: one-sentence claim, evidence with turn links, one fix under it.
+- Every number re-checked; no merged phases; no "called" where it was "loaded".
+- Nothing caused by our harness, the model, or a third party.
+- Under 250 words. No preamble, no sign-off, no internal footers (run ids, "generated by", eval config).
