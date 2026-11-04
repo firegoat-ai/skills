@@ -1,6 +1,6 @@
 ---
 name: spotting-friction
-description: Use when you need to identify what hurt an agent's experience in an eval run and turn it into a concrete fix the dev-tool owner can ship.
+description: Use when you need to identify what hurt an agent's experience in an eval run and turn it into a concrete fix the dev-tool owner can ship, or when asked how a provider's AX looks or what they should fix.
 ---
 # Spotting friction
 
@@ -29,6 +29,9 @@ The reader is the SaaS team whose tool was evaluated. They control their **docs,
 - Agent installed the wrong SDK from a stale search result → fix the docs/package metadata so the canonical slug wins.
 - Agent looped on a 404 for a guessed URL → return a helpful 200/redirect or a machine-readable error for agent traffic.
 - Agent couldn't find the API key → add a "Copy API key" affordance / document the exact path.
+
+## Default answer: "how is our AX" / "what should we fix"
+When asked how a provider's AX looks or what they should fix, answer in under 10 lines: one line per run with the model and whether the goal was met, then the single biggest finding, then the top 3 fixes they control, ranked by impact, each one sentence naming the exact page or file with a linked trace turn as proof. No cost, no process notes, no minor quirks: only what would change whether an agent succeeds with the provider. Give more detail only when the user asks for it.
 
 ## Practical loop
 1. `get_trace` (with `offset: 0` for the full run, or scan `toolCounts`/`totalErrors`/`totalInterruptions` first per the reading-an-agent-trace skill) to find the turns where things went wrong — tool failures (`isError`) or the agent stalling/looping.
