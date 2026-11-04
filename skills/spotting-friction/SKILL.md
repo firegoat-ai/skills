@@ -31,12 +31,7 @@ The reader is the SaaS team whose tool was evaluated. They control their **docs,
 - Agent couldn't find the API key → add a "Copy API key" affordance / document the exact path.
 
 ## Default answer: "how is our AX" / "what should we fix"
-Unless the user asks for another shape or more detail, answer in under 10 lines, in this order:
-1. One line per run: the run link, the model, and whether the goal was met (from `outcome`; for a nulled cause other than `goal_not_met`, name the cause). Add at most one short clause on why.
-2. The single biggest finding: one or two sentences on what decided whether agents succeeded.
-3. The top 3 fixes the provider controls, ranked by how much each would change whether an agent succeeds. Each fix is one sentence that names the exact page, file, command, or error message to change, with a linked trace turn as proof (`.../trace#turn-N`, see the linking-to-the-dashboard skill). Give fewer than 3 when fewer clear that bar; never pad.
-
-Leave out cost, time, and token totals (here this overrides the interpreting-scores advice to lead with metrics); process notes and caveats (how you looked, report-vs-trace metric mismatches, assumptions you made); minor quirks that did not change the outcome; and anything the provider does not control (our harness, sandbox, secret masking, the model, third parties). The user can always ask for more: then give the full breakdown.
+When asked how a provider's AX looks or what they should fix, answer in under 10 lines: one line per run with the model and whether the goal was met, then the single biggest finding, then the top 3 fixes they control, ranked by impact, each one sentence naming the exact page or file with a linked trace turn as proof. No cost, no process notes, no minor quirks: only what would change whether an agent succeeds with the provider. Give more detail only when the user asks for it.
 
 ## Practical loop
 1. `get_trace` (with `offset: 0` for the full run, or scan `toolCounts`/`totalErrors`/`totalInterruptions` first per the reading-an-agent-trace skill) to find the turns where things went wrong — tool failures (`isError`) or the agent stalling/looping.
