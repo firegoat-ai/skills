@@ -1,6 +1,6 @@
 ---
 name: spotting-friction
-description: Use when you need to identify what hurt an agent's experience in an eval run and turn it into a concrete fix the dev-tool owner can ship.
+description: Use when you need to identify what hurt an agent's experience in an eval run and turn it into a concrete fix the dev-tool owner can ship, or when asked how a provider's AX looks or what they should fix.
 ---
 # Spotting friction
 
@@ -29,6 +29,14 @@ The reader is the SaaS team whose tool was evaluated. They control their **docs,
 - Agent installed the wrong SDK from a stale search result → fix the docs/package metadata so the canonical slug wins.
 - Agent looped on a 404 for a guessed URL → return a helpful 200/redirect or a machine-readable error for agent traffic.
 - Agent couldn't find the API key → add a "Copy API key" affordance / document the exact path.
+
+## Default answer: "how is our AX" / "what should we fix"
+Unless the user asks for another shape or more detail, answer in under 10 lines, in this order:
+1. One line per run: the run link, the model, and whether the goal was met (from `outcome`; for a nulled cause other than `goal_not_met`, name the cause). Add at most one short clause on why.
+2. The single biggest finding: one or two sentences on what decided whether agents succeeded.
+3. The top 3 fixes the provider controls, ranked by how much each would change whether an agent succeeds. Each fix is one sentence that names the exact page, file, command, or error message to change, with a linked trace turn as proof (`.../trace#turn-N`, see the linking-to-the-dashboard skill). Give fewer than 3 when fewer clear that bar; never pad.
+
+Leave out cost, time, and token totals (here this overrides the interpreting-scores advice to lead with metrics); process notes and caveats (how you looked, report-vs-trace metric mismatches, assumptions you made); minor quirks that did not change the outcome; and anything the provider does not control (our harness, sandbox, secret masking, the model, third parties). The user can always ask for more: then give the full breakdown.
 
 ## Practical loop
 1. `get_trace` (with `offset: 0` for the full run, or scan `toolCounts`/`totalErrors`/`totalInterruptions` first per the reading-an-agent-trace skill) to find the turns where things went wrong — tool failures (`isError`) or the agent stalling/looping.
