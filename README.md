@@ -25,7 +25,7 @@ These teach your agent to work with your [Firegoat evals](https://firegoat.ai/ev
 | [`interpreting-scores`](./skills/interpreting-scores) | Read and explain an eval run's metrics, insights, and overall experience, including runs with no score. |
 | [`reading-an-agent-trace`](./skills/reading-an-agent-trace) | Reconstruct what an agent did during an eval run and find where it got stuck. |
 | [`reading-browser-screenshots`](./skills/reading-browser-screenshots) | Read browser-agent screenshot turns when friction happened in login, signup, OAuth, or a dashboard. |
-| [`spotting-friction`](./skills/spotting-friction) | Find what hurt an agent's experience and turn it into a fix the tool owner can ship. |
+| [`spotting-friction`](./skills/spotting-friction) | Find what hurt an agent's experience and turn it into a fix the tool owner can ship; the default short answer to "how is our AX" and "what should we fix". |
 | [`comparing-competitors`](./skills/comparing-competitors) | Benchmark a provider against its competitors on the same eval prompt. |
 | [`harnesses-and-models`](./skills/harnesses-and-models) | Work out which coding agent and model ran an eval, compare across them, or pin one for a run. |
 | [`suggesting-eval-prompts`](./skills/suggesting-eval-prompts) | Write eval prompts that measure the agent experience of a real end goal. |
