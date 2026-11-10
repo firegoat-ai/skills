@@ -59,7 +59,8 @@ So write the prompt the way a real person types to their coding agent:
     it needs a key, do the errors and docs tell it exactly what to do? end_goal: the problem is
     solved hands-off, or the agent stops at the first real blocker and tells the user the one
     step left (which key, where to get it). In your report, give the run its AX tier list
-    placement (S hands-off, A just confirm, B copy a key, C figure it out, D blocked), labeled
+    placement (S hands-off, A just confirm, B copy a key, C figure it out, D blocked; graded
+    by the rules in the placing-on-the-ax-tier-list skill), labeled
     "AX tier list placement" in its own line under the zero-start grade, never as "tier" next
     to the checks tier eval prints: they are different scales.
   - **Configured** (one or two): the setup a user has after signing up. A key the user exports

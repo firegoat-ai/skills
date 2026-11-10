@@ -32,6 +32,7 @@ These teach your agent to work with your [Firegoat evals](https://firegoat.ai/ev
 | [`evaluating-mcp-servers`](./skills/evaluating-mcp-servers) | Build an eval for an MCP server: register it in the sandbox, write the task and checks, verify the result yourself, and compare servers head to head. |
 | [`team-findings-messages`](./skills/team-findings-messages) | Write eval findings as a short message to the evaluated company's engineers: the setup, the most important verified findings with linked trace turns, a fix their team controls for each, and a next step. |
 | [`product-update-messages`](./skills/product-update-messages) | Write the general product update the Slack bot posts to customer channels (or the email version): every shipped feature as a linked one-liner, ending with offers the bot can act on. |
+| [`placing-on-the-ax-tier-list`](./skills/placing-on-the-ax-tier-list) | Place a product on the [AX tier list](https://firegoat.ai/axlist), from S (hands-off) to D (blocked): the four criteria, the grading rules, the evidence tags and the discovery column. |
 | [`linking-to-the-dashboard`](./skills/linking-to-the-dashboard) | Cite runs, prompts, and trace moments as clickable dashboard links. |
 | [`filing-feedback`](./skills/filing-feedback) | Report a platform bug, confusing behaviour, or missing feature through `send_feedback`. |
 
