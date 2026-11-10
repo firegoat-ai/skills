@@ -29,6 +29,7 @@ These teach your agent to work with your [Firegoat evals](https://firegoat.ai/ev
 | [`comparing-competitors`](./skills/comparing-competitors) | Benchmark a provider against its competitors on the same eval prompt. |
 | [`harnesses-and-models`](./skills/harnesses-and-models) | Work out which coding agent and model ran an eval, compare across them, or pin one for a run. |
 | [`suggesting-eval-prompts`](./skills/suggesting-eval-prompts) | Write eval prompts that measure the agent experience of a real end goal. |
+| [`product-eval-methodology`](./skills/product-eval-methodology) | Evaluate a developer product's agent experience end to end in ten steps: find its CLI, MCP, API, SDK and docs surfaces, set up install and auth, write the prompt and checks, and read the first results. |
 | [`evaluating-mcp-servers`](./skills/evaluating-mcp-servers) | Build an eval for an MCP server: register it in the sandbox, write the task and checks, verify the result yourself, and compare servers head to head. |
 | [`team-findings-messages`](./skills/team-findings-messages) | Write eval findings as a short message to the evaluated company's engineers: the setup, the most important verified findings with linked trace turns, a fix their team controls for each, and a next step. |
 | [`product-update-messages`](./skills/product-update-messages) | Write the general product update the Slack bot posts to customer channels (or the email version): every shipped feature as a linked one-liner, ending with offers the bot can act on. |
