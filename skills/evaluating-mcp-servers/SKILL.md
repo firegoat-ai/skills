@@ -13,7 +13,7 @@ An MCP eval asks a real coding agent to reach one end goal through one MCP serve
 - `request_run({ promptId })` fires another run. `get_run({ runId })` follows it; `get_run_trace` and `get_run_artifacts` read what the agent did and the files it left.
 
 ## 1. Write the task
-- **Name the server, not the steps.** "Using the Acme MCP server, …". No tool names, no setup hints, no answer.
+- **Name the server, not the steps.** "Using the Acme MCP server, …". No tool names, no setup hints, no answer. The same goes for any lane in a surface comparison: name the CLI or SDK too. MCP tools show up in the agent's tool list for free, while a CLI on PATH is invisible until the agent looks, so an unnamed CLI lane measures discovery.
 - **One end goal with a deterministic, checkable result.** Seed data must be computable in advance, e.g. "customer i has country ["US","DE","JP","BR"][i mod 4]", so you know the right answer before the run.
 - **Unique, harmless objects.** Timestamp every name (`eval-<current UTC time as YYYYMMDDHHMM>`), use `example.com` addresses and test data, and end with "Only create these objects; do not change or delete anything else."
 - **Machine-readable result.** Finish with "Save to /app/result.json with exactly this shape: {…}" so the outcome can be compared field by field.
@@ -79,5 +79,6 @@ Normalize each part min-max inside the category and average them. Report tokens 
 
 ## Findings worth reporting
 - A missing lifecycle tool (no way to delete what the server created) is a real server gap. Keep the cleanup step in the task and report it.
+- Instructions inside tool descriptions are part of the product. A parameter described as "you MUST ask the user for this" stops a headless agent cold. Grep the schemas the trace shows for "MUST", "never" and "ask the user", and check the examples in them are correct.
 - Tool schema size: how many tokens the server's `tools/list` costs, and whether tool search hides it.
 - MCP errors and retries in the trace: which tool calls failed, and whether the error message let the agent recover. See the `designing-agent-error-messages` skill.

@@ -39,7 +39,7 @@ Ten steps, in order. Tools: the Firegoat evals MCP server (`create_prompt`, `upd
    - Core features: cold start (`scaffold`: `blank`, or a bare `nextjs` / `react`).
    - Deeper/secondary features: an existing app that already integrates the product (e.g. create-next-app with the product wired in), built by `setupCommand`.
 
-8. **Write the prompt.** Reverse-engineer the business problem. 1–2 lines in a real user's words. No hints, no product names, no implementation names. See the suggesting-eval-prompts skill.
+8. **Write the prompt.** Reverse-engineer the business problem. 1–2 lines in a real user's words. No hints, no product names, no implementation names. One exception: when you compare surfaces (CLI vs MCP vs SDK lanes), each lane names its surface, or the lane measures whether the agent found it rather than how well it works. Keep an unnamed baseline separately if you want that discovery signal. See the suggesting-eval-prompts skill.
 
 9. **Write the checks.** The knowledge lives here, not in the prompt. The `checks` map (slug → criterion) says what a correct implementation is and how the agent was supposed to use the product (right command, MCP tool, endpoint, SDK call). `endGoal` is the outcome the judge grades.
 
