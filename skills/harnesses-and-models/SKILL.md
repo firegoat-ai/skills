@@ -29,6 +29,9 @@ Older runs recorded a model but no harness. Resolution rule: a null harness on a
 ## Where harness · model is exposed
 The run-centric tools carry the submitted combo directly: `list_runs` and `get_run` return top-level `harness` and `model` fields (the config the run was triggered with) — that's the reliable source. The report-centric tools do NOT: `get_report` may carry a model inside `providerMeta.model` but no harness, and `list_reports` / `get_prompt_benchmarks` history items return neither. So if a user asks "which harness/model ran this?": for a run, read `list_runs`/`get_run` `harness`/`model`; for a report slug only, try `get_report().providerMeta.model`, else say the report tools don't expose the harness and point them at the run's dashboard report page (see the linking-to-the-dashboard skill) rather than guessing.
 
+## Codex counts MCP calls as `exec`
+Codex can call MCP tools from inside its code-execution tool (`exec`). Those calls show up in `toolCounts` and the run metrics as `exec`, not as the MCP tool, so a Codex run can look like it never touched the server. Grep the `exec` inputs for `mcp__<server>__<tool>` before concluding it didn't. The judge reads them correctly; the counts don't.
+
 ## Pinning at trigger time
 `request_run({ promptId, harnessModel: { harness, model } })` pins the combo — it's validated against the registry above and unknown combos are rejected. Omit `harnessModel` to let the queue use the default.
 
