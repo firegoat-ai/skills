@@ -429,4 +429,4 @@ Never commit anything in `.firegoat/` (runs, sessions) or credentials.
 
 ## Examples
 
-`references/examples.md` has good and bad tests with their YAML.
+[`references/examples.md`](https://github.com/firegoat-ai/skills/blob/main/skills/firegoat-onboarding/references/examples.md) has good and bad tests with their YAML.
