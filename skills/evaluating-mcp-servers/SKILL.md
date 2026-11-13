@@ -73,13 +73,13 @@ Your `checks` map is added on top of the verifier's defaults. Every run is grade
 | `not_hardcoded` | Credentials are externalized, not hardcoded in source |
 | `api_reachable` | The code successfully called the provider's API |
 
-Most of them are about code. An MCP-only task writes no code, so `installed`, `build`, `schema`, `client`, `not_placeholder` and `not_hardcoded` score 0 on runs that did the work, and drag the pass rate down for nothing. A task that only asks a question about the docs has the same problem. Keep `data` and `api_reachable` while the task produces real data through the provider. If a run that did the work still fails one of them, null it too.
+Most of them are about code. An MCP-only task writes no code, so `installed`, `build`, `schema`, `client`, `not_placeholder`, `not_hardcoded` and `api_reachable` grade nothing there. The judge tends to mark them not applicable and pass them anyway ("No code; tool calls succeeded"). That is a free pass: it pads the checks count and the pass rate without telling you anything, and a judge can also fail them instead. A task that only asks a question about the docs has the same problem. Keep `data` on while the task produces real data.
 
 How to turn one off, in `create_prompt` or `update_prompt_config`:
 - `"<default-slug>": null` turns that default off.
 - A non-empty string adds a check, or rewrites the default of the same slug. `""` is rejected.
 - A `null` on a slug that isn't one of the eight is rejected, and so is nulling all eight without adding a check of your own: the judge would have nothing to grade.
-- `update_prompt_config` replaces the whole map, so send your custom checks along with the nulls.
+- `update_prompt_config` replaces the whole map, so send your custom checks along with the nulls. On a scenario (competitor sub-prompt), a non-empty map replaces the parent's map entirely too.
 
 The same map for an MCP task:
 
@@ -91,6 +91,7 @@ The same map for an MCP task:
   "client": null,
   "not_placeholder": null,
   "not_hardcoded": null,
+  "api_reachable": null,
   "created-via-mcp": "The dataset and its rows were created through Acme MCP tool calls in the trace.",
   "readback-matches": "/app/result.json read_back equals an Acme MCP read in the trace that returned 5 rows.",
   "stayed-in-mcp": "The work came from Acme MCP tool calls, not from curl, WebFetch, the Acme SDK, CLI or REST API, or another MCP server. Work inside Acme's own remote sandbox or browser counts as MCP."
@@ -99,7 +100,7 @@ The same map for an MCP task:
 
 On the dashboard, the prompt's Checks tab lists the defaults you turned off under "Turned off".
 
-Null a default only when it cannot apply to the task, never to lift a score. A code task that leaves a TODO or hardcodes a key should fail `not_placeholder` or `not_hardcoded`; that is a real finding.
+Null a default only when it cannot apply to the task, never to change a score. A code task that leaves a TODO or hardcodes a key should fail `not_placeholder` or `not_hardcoded`; that is a real finding.
 
 ## 5. Verify the result yourself
 The LLM judge reads the trace and can be fooled: a confident wrong answer (a stale version number, a wrong item id) passes checks that only ask whether the agent reported something. After the run:
