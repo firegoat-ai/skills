@@ -33,7 +33,7 @@ Lay it out as feature × lane × harness. A lane where most runs used a differen
 - the same behaviour judged differently in two runs
 - an `outcome` that contradicts the checklist (all checks passed but `goal_not_met`, or `succeeded` with most checks failed)
 - a verdict blaming truncation when the trace shows the work finished
-- default checks that can't apply to this task scoring 0 on runs that did the work
+- default checks that can't apply to this task scoring 0 on runs that did the work, or passing for free and padding the count (see evaluating-mcp-servers on turning them off)
 
 Report the custom-check pass rate separately from the defaults. Cite a judge disagreement as a judge finding, never as product friction.
 
