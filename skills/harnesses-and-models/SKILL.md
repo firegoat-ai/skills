@@ -18,6 +18,12 @@ The only combos the queue accepts:
 | `fx` | vercel_ai_gateway/anthropic/claude-sonnet-4.5 (Sonnet 4.5), vercel_ai_gateway/anthropic/claude-opus-4.6 (Opus 4.6) |
 | `v0` | v0/v0-mini (v0 Mini), v0/v0-pro (v0 Pro), v0/v0-max (v0 Max) |
 | `grok-build` | grok-build-0.1 (Grok Build 0.1) |
+| `mastracode` | anthropic/claude-sonnet-5-5 (Sonnet 5.5), anthropic/claude-opus-5-5 (Opus 5.5) |
+| `copilot-cli` | anthropic/claude-sonnet-5-5 (Sonnet 5.5), anthropic/claude-opus-5-5 (Opus 5.5) |
+
+`mastracode` is Mastra Code and `copilot-cli` is GitHub Copilot. Both take only `provider/model` ids (a bare `claude-sonnet-5-5` is rejected). `copilot-cli` runs on an Anthropic key (BYOK), so Copilot-hosted models aren't available.
+
+Only `claude-code` has a user emulator and browser agent. On every other harness, a question the agent asks the user mid-run goes unanswered, so it can't get a key or a sign-up done by asking. Give it what it needs up front (env credentials), or compare harnesses only on tasks that don't need a question.
 
 A `[1m]` id runs the same model with a 1M-token context window: Claude Code budgets a bare id at 200k and auto-compacts past that.
 
