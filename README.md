@@ -2,7 +2,7 @@
 
 Open-source [Claude Code](https://claude.com/claude-code) skills for building software that **AI agents** can actually use — by the team behind [Firegoat](https://firegoat.ai), where we run real agents through 100+ dev tools and score their experience.
 
-Each skill is a self-contained folder under [`skills/`](./skills). This repo is the single source for every Firegoat skill, including the product skills the [Firegoat evals](https://firegoat.ai/evals) dashboard installs.
+Each skill is a self-contained folder under [`skills/`](./skills). This repo is the source for the public Firegoat skills, including the product skills the [Firegoat evals](https://firegoat.ai/evals) dashboard installs.
 
 ## Skills
 
@@ -26,14 +26,10 @@ These teach your agent to work with your [Firegoat evals](https://firegoat.ai/ev
 | [`reading-an-agent-trace`](./skills/reading-an-agent-trace) | Reconstruct what an agent did during an eval run and find where it got stuck. |
 | [`reading-browser-screenshots`](./skills/reading-browser-screenshots) | Read browser-agent screenshot turns when friction happened in login, signup, OAuth, or a dashboard. |
 | [`spotting-friction`](./skills/spotting-friction) | Find what hurt an agent's experience and turn it into a fix the tool owner can ship; the default short answer to "how is our AX" and "what should we fix". |
-| [`auditing-eval-runs`](./skills/auditing-eval-runs) | Check a set of runs measured the product before reporting: shared-account collisions, text added to the task, the simulated user's side effects, hidden end-goal requirements, which surface each run used, and whether the judge graded alike runs alike. |
 | [`comparing-competitors`](./skills/comparing-competitors) | Benchmark a provider against its competitors on the same eval prompt. |
 | [`harnesses-and-models`](./skills/harnesses-and-models) | Work out which coding agent and model ran an eval, compare across them, or pin one for a run. |
 | [`suggesting-eval-prompts`](./skills/suggesting-eval-prompts) | Write eval prompts that measure the agent experience of a real end goal. |
-| [`product-eval-methodology`](./skills/product-eval-methodology) | Evaluate a developer product's agent experience end to end in ten steps: find its CLI, MCP, API, SDK and docs surfaces, set up install and auth, write the prompt and checks, and read the first results. |
 | [`evaluating-mcp-servers`](./skills/evaluating-mcp-servers) | Build an eval for an MCP server: register it in the sandbox, write the task and checks, verify the result yourself, and compare servers head to head. |
-| [`team-findings-messages`](./skills/team-findings-messages) | Write eval findings as a short message to the evaluated company's engineers: the setup, the most important verified findings with linked trace turns, a fix their team controls for each, and a next step. |
-| [`product-update-messages`](./skills/product-update-messages) | Write the general product update the Slack bot posts to customer channels (or the email version): every shipped feature as a linked one-liner, ending with offers the bot can act on. |
 | [`placing-on-the-ax-tier-list`](./skills/placing-on-the-ax-tier-list) | Place a product on the [AX tier list](https://firegoat.ai/axlist), from S (hands-off) to D (blocked): the four criteria, the grading rules, the evidence tags and the discovery column. |
 | [`linking-to-the-dashboard`](./skills/linking-to-the-dashboard) | Cite runs, prompts, and trace moments as clickable dashboard links. |
 | [`filing-feedback`](./skills/filing-feedback) | Report a platform bug, confusing behaviour, or missing feature through `send_feedback`. |
