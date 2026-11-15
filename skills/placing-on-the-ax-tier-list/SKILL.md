@@ -28,8 +28,9 @@ D is the gate that stops a start outright: payment, a sales call, an invite. A d
 4. **Cloud only.** Grade the hosted product. Self-hosted and local paths are out of scope, even when they need no account.
 5. **A run overrides the docs only where the agent attempted that path.** If no run tried the documented no-account path, the docs stand, and the gap goes in the discovery column.
 6. **"Broken" means the provider's path broke, not your harness.** If the run stopped on something in your own sandbox (no funded wallet, a missing key for another service in your env), that is not the provider's failure. Re-grade from what the provider's path did.
-7. **Never publish a label its own evidence contradicts.** If the label says a path was refused and the cited docs say it works, fix one of them first.
-8. **One verified path can settle several cells.** If you ran the provider's no-account claim command yourself and it provisioned a working resource, sign up, bot protection and paywall follow from it, at high confidence.
+7. **A stand-in user failing a simple step still grades that row.** When the browser agent stands in for the user and fails a step the tier row calls simple (one key copied from a dashboard, one captcha), the provider still sits on that row: copying one key is B even if the stand-in never got the key. Grade what the step demanded, not how well the stand-in did, and report the failure as an interruption in the run. A failure caused by your own sandbox (rule 6) is not graded at all.
+8. **Never publish a label its own evidence contradicts.** If the label says a path was refused and the cited docs say it works, fix one of them first.
+9. **One verified path can settle several cells.** If you ran the provider's no-account claim command yourself and it provisioned a working resource, sign up, bot protection and paywall follow from it, at high confidence.
 
 ## Evidence
 
@@ -44,15 +45,17 @@ Look at real traces before deciding, not at the flow you imagine. Confidence is 
 
 Discovery is a fifth column that records how much of the tier the agent actually reached. It is diagnostic and never moves the tier.
 
-| Value | Meaning |
-|---|---|
-| Used | The agent took the best path the provider offers. |
-| Told | It took the best path, but only after the prompt or scaffold pointed at it. |
-| Broken | It found the better path, and the provider's path broke on the way. |
-| Missed | A documented path would have scored a better tier, and the agent never tried it. |
-| None | No better path exists. Nothing to miss. |
-| Not needed | The task never required a credential, so there was no better path to find. |
-| No coverage | No run exercised the provider's onboarding. |
+| Value | Shown on /axlist | Meaning |
+|---|---|---|
+| Used | Found | The agent took the best path the provider offers. |
+| Told | Only when pointed | It took the best path, but only after the prompt or scaffold pointed at it. |
+| Broken | Found, didn't work | It found the better path, and the provider's path broke on the way. |
+| Missed | Never found | A documented path would have scored a better tier, and the agent never tried it. |
+| None | No better path | No better path exists. Nothing to miss. |
+| Not needed | Not needed | The task never required a credential, so there was no better path to find. |
+| No coverage | Not tested | No run exercised the provider's onboarding. |
+
+Use the value in your notes and data; quote the /axlist label when you explain a placement to someone reading the page.
 
 Use Missed only when the path the agent missed would have been a better tier than the one it took. A missed path at the same tier goes in the comment.
 
