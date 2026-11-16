@@ -9,7 +9,11 @@ description: >-
 A brief is a short page the whole org reads at `/{org}/briefs/{slug}` once published. Lead with the answer. A reader who stops after the first paragraph should still know the result.
 
 ## Tools
-- `create_brief({ periodKind, anchorDate, endDate?, title? })` makes a draft over a period (`day`, `week`, `month`, `custom`). It freezes the org's published runs in that period into the brief's scope and averages their metrics. By default that is every published run in the period, not only the ones you care about, so check the frozen run count in `list_briefs` and say in the body which runs the brief is about.
+- `create_brief({ periodKind, anchorDate, endDate?, title?, promptId?, runIds? })` makes a draft over a period (`day`, `week`, `month`, `custom`) and freezes runs into the brief's scope, averaging their metrics. Scope it to the runs the brief is about:
+  - `promptId`: only that prompt's runs, including its scenario and competitor sub-prompts. A sub-prompt id is refused; to cover one scenario, use `runIds`.
+  - `runIds`: exactly those runs (the ids `get_run` / `list_runs` return). A run outside the period or the org fails, and the error names it.
+  - Both: every run in `runIds` must belong to the prompt.
+  - Neither: every published run in the org in that period, related or not. Pass one of the two for a tier eval or a single-prompt brief, and check the frozen run count in `list_briefs`.
 - `update_brief({ slug, body?, title?, status? })` replaces the whole markdown body. Set the title with `title`, not with a `#` heading in the body.
 - `publish_brief({ slug })` publishes the current body as the next version. It refuses while a run citation doesn't resolve.
 - `get_brief({ slug, version? })`, `list_briefs({ status? })`, `list_brief_versions({ slug })` read what exists.
