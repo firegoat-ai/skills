@@ -14,21 +14,26 @@ Every eval run pairs a code agent (the terminal, e.g. claude-code) with a **brow
 Each screenshot block has:
 - `screenshotStep` — the browser agent's step number.
 - `screenshotThinking` — the browser agent's reasoning at that moment, in its own words.
+- `screenshotNextGoal` — what the browser agent meant to do next (e.g. "Enter the email and submit the sign-in form"). Newer runs carry it on nearly every step, while `screenshotThinking` is often null. Older runs have it null.
 - `screenshotAction` — what it did (e.g. a navigate, a click).
 - `screenshotPageUrl` — the URL of the page it was on.
 - a `timestamp`.
 
 ## You read text, not pixels
-The chat/MCP tools return **no image bytes** — each screenshot block carries a `screenshotUrl`, but it is a relative `/api/screenshot` proxy path that only resolves on the authenticated dashboard, not an image you can fetch or see. You analyze the browser agent entirely through its `thinking`/`action`/`pageUrl` text. The actual images are only viewable on the authenticated dashboard trace page, so when it matters, link the human there (see the linking-to-the-dashboard skill).
+The chat/MCP tools return **no image bytes** — each screenshot block carries a `screenshotUrl`, but it is a relative `/api/screenshot` proxy path that only resolves on the authenticated dashboard, not an image you can fetch or see. You analyze the browser agent entirely through its `thinking`/`nextGoal`/`action`/`pageUrl` text. The actual images are only viewable on the authenticated dashboard trace page, so when it matters, link the human there (see the linking-to-the-dashboard skill).
+
+## How the two agents talk
+The code agent sees the browser agent's messages as messages from the user. When the code agent asks for a key or a login, the browser agent's answer arrives in the code agent's trace as a user turn. Read those turns as the browser agent speaking, not as a human or as the prompt, and match them to the screenshot turns around the same timestamp.
 
 ## Reading a browser segment
 - `screenshotPageUrl` tells you which page the agent was on — a login form, an OAuth consent screen, a signup flow, dashboard settings.
-- A long run of screenshots on the **same URL** means the browser agent is stuck: a signup wall, a captcha, a login loop.
+- A run of screenshots on the **same URL** does not by itself mean the browser agent is stuck. Single-page apps and embedded login widgets (Descope, Clerk, Auth0) change the screen without changing the URL, so a whole signup or login flow can sit on one URL. `screenshotPageUrl` is captured at the same moment as the screenshot, so a run of identical URLs is real, not a logging artifact.
+- Before calling a same-URL run stuck, read each step's `screenshotAction`, `screenshotNextGoal` and `screenshotThinking`, and look at the images on the dashboard. Progress shows as different actions on different fields (email, then code, then a consent button). Stuck shows as the same action and next goal repeated, or thinking that says the page didn't change: a signup wall, a captcha, a login loop.
 - `screenshotThinking` narrates the confusion in the agent's own words — quote it.
 - This is where browser-side friction lives (auth walls, missing credentials, OAuth flows the agent can't drive), as opposed to code-agent friction (bad docs, broken SDKs) covered by the spotting-friction skill.
 
 ## Practical loop
 1. `get_report` for context.
 2. `get_trace` with `includeBrowser: true` — this also makes turn indices match the dashboard's `#turn-N` anchors (see the linking-to-the-dashboard skill).
-3. Scan the screenshot turns for page-URL loops and stuck `thinking`.
-4. When reporting browser-side friction, quote the `screenshotPageUrl` + `screenshotAction`/`screenshotThinking` as evidence, and link the dashboard trace turn so the human can see the actual image you can't.
+3. Scan the screenshot turns for repeated actions and stuck `thinking`. A same-URL run is only a loop if the actions repeat too.
+4. When reporting browser-side friction, quote the `screenshotPageUrl` + `screenshotAction`/`screenshotNextGoal`/`screenshotThinking` as evidence, and link the dashboard trace turn so the human can see the actual image you can't.
