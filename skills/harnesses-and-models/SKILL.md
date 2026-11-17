@@ -21,7 +21,7 @@ The only combos the queue accepts:
 | `mastracode` | anthropic/claude-sonnet-5-5 (Sonnet 5.5), anthropic/claude-opus-5-5 (Opus 5.5), mastra/deepseek/deepseek-v4.1-flash (DeepSeek V4.1 Flash), mastra/z-ai/glm-5.3-flash (GLM 5.3 Flash), mastra/google/gemini-3.8-flash (Gemini 3.8 Flash), mastra/minimax/minimax-m3.1-flash (MiniMax M3.1 Flash), mastra/moonshotai/kimi-k3 (Kimi K3), mastra/qwen/qwen3.8-flash (Qwen3.8 Flash) |
 | `copilot-cli` | anthropic/claude-sonnet-5-5 (Sonnet 5.5), anthropic/claude-opus-5-5 (Opus 5.5) |
 
-`mastracode` is Mastra Code and `copilot-cli` is GitHub Copilot. Both take only `provider/model` ids (a bare `claude-sonnet-5-5` is rejected). `copilot-cli` runs on an Anthropic key (BYOK), so Copilot-hosted models aren't available. The `mastra/<provider>/<model>` ids run through Mastra's model gateway, so they're only available on `mastracode`.
+`mastracode` is Mastra Code and `copilot-cli` is GitHub Copilot. Both take only `provider/model` ids (a bare `claude-sonnet-5-5` is rejected). `copilot-cli` runs on an Anthropic key (BYOK), so Copilot-hosted models aren't available. The `mastra/<provider>/<model>` ids run through Mastra's model gateway and exist only on `mastracode`. The queue accepts them, but they can't run yet: a run on one fails until harness support ships. Don't pin or request them until then.
 
 Only `claude-code` has a user emulator and browser agent. On every other harness, a question the agent asks the user mid-run goes unanswered, so it can't get a key or a sign-up done by asking. Give it what it needs up front (env credentials), or compare harnesses only on tasks that don't need a question.
 
