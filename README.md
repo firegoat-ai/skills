@@ -29,6 +29,7 @@ These teach your agent to work with your [Firegoat evals](https://firegoat.ai/ev
 | [`comparing-competitors`](./skills/comparing-competitors) | Benchmark a provider against its competitors on the same eval prompt. |
 | [`harnesses-and-models`](./skills/harnesses-and-models) | Work out which coding agent and model ran an eval, compare across them, or pin one for a run. |
 | [`suggesting-eval-prompts`](./skills/suggesting-eval-prompts) | Write eval prompts that measure the agent experience of a real end goal. |
+| [`writing-comparison-prompts`](./skills/writing-comparison-prompts) | Write an eval where the agent researches two or more products and picks one for an app, then read the pick rate across runs. |
 | [`evaluating-mcp-servers`](./skills/evaluating-mcp-servers) | Build an eval for an MCP server: register it in the sandbox, write the task and checks, verify the result yourself, and compare servers head to head. |
 | [`placing-on-the-ax-tier-list`](./skills/placing-on-the-ax-tier-list) | Place a product on the [AX tier list](https://firegoat.ai/axlist), from S (hands-off) to D (blocked): the four criteria, the grading rules, the evidence tags and the discovery column. |
 | [`writing-briefs`](./skills/writing-briefs) | Write and publish a brief over a set of runs: bottom line, grade table, evidence linked to trace turns, fixes, confidence. |
