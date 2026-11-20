@@ -1,0 +1,14 @@
+{
+  "name": "firegoat",
+  "description": "Firegoat's Claude Code plugin.",
+  "owner": { "name": "Firegoat", "url": "https://firegoat.ai" },
+  "plugins": [
+    {
+      "name": "firegoat",
+      "source": "./",
+      "description": "The Firegoat evals MCP server, the evals CLI, and the Firegoat skills.",
+      "homepage": "https://firegoat.ai/evals/docs",
+      "category": "development"
+    }
+  ]
+}
