@@ -20,7 +20,7 @@ An MCP eval asks a real coding agent to reach one end goal through one MCP serve
 - **A real developer task.** Good shapes: create a resource, seed it, query it, read it back; run code remotely and clean up; send a message and confirm delivery; deploy something and hit its URL.
 
 ## 2. Register the server (`setupCommand`)
-`setupCommand` runs as the sandbox healthcheck, **before** the prompt's env exists. Register the server with the env reference kept literal, so Claude Code expands it when it launches the server:
+`setupCommand` runs as the sandbox healthcheck, **before** the prompt's env exists. Its output is kept as the run's `healthcheckLog` and is never shown to the agent: anything the agent must know about the state setup leaves (e.g. a registered but unauthenticated MCP server) goes in the prompt text, or in a file setup writes into the workdir that the prompt tells the agent to read. Register the server with the env reference kept literal, so Claude Code expands it when it launches the server:
 
 ```bash
 # remote server
