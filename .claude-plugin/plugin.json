@@ -1,0 +1,34 @@
+{
+  "name": "firegoat",
+  "version": "0.1.0",
+  "description": "Firegoat for Claude Code: the Firegoat evals MCP server, the evals CLI, and skills for building software AI agents can use and for reading your Firegoat evals.",
+  "author": {
+    "name": "Firegoat",
+    "url": "https://firegoat.ai"
+  },
+  "homepage": "https://firegoat.ai/evals/docs",
+  "repository": "https://github.com/firegoat-ai/skills",
+  "license": "MIT",
+  "keywords": [
+    "firegoat",
+    "evals",
+    "ax",
+    "agent-experience",
+    "mcp"
+  ],
+  "privacyPolicyUrl": "https://firegoat.ai/privacy",
+  "network": {
+    "hosts": [
+      "firegoat.ai",
+      "github.com",
+      "release-assets.githubusercontent.com",
+      "objects.githubusercontent.com"
+    ]
+  },
+  "mcpServers": {
+    "firegoat": {
+      "type": "http",
+      "url": "https://firegoat.ai/evals/api/mcp"
+    }
+  }
+}

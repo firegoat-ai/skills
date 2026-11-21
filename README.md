@@ -32,6 +32,7 @@ These teach your agent to work with your [Firegoat evals](https://firegoat.ai/ev
 | [`evaluating-mcp-servers`](./skills/evaluating-mcp-servers) | Build an eval for an MCP server: register it in the sandbox, write the task and checks, verify the result yourself, and compare servers head to head. |
 | [`placing-on-the-ax-tier-list`](./skills/placing-on-the-ax-tier-list) | Place a product on the [AX tier list](https://firegoat.ai/axlist), from S (hands-off) to D (blocked): the four criteria, the grading rules, the evidence tags and the discovery column. |
 | [`writing-briefs`](./skills/writing-briefs) | Write and publish a brief over a set of runs: bottom line, grade table, evidence linked to trace turns, fixes, confidence. |
+| [`using-firegoat`](./skills/using-firegoat) | Which Firegoat surface to use and how to set it up: the MCP server and `evals` CLI for your account (cloud), or `npx firegoat@latest` on your machine (local). |
 | [`linking-to-the-dashboard`](./skills/linking-to-the-dashboard) | Cite runs, prompts, and trace moments as clickable dashboard links. |
 | [`filing-feedback`](./skills/filing-feedback) | Report a platform bug, confusing behaviour, or missing feature through `send_feedback`. |
 
@@ -44,6 +45,16 @@ For [`npx firegoat`](https://www.npmjs.com/package/firegoat): local AX evals tha
 | [`firegoat-onboarding`](./skills/firegoat-onboarding) | Draft 2-3 `firegoat.yaml` tests for the current repo: prompts, goals, script checks, and `build:` / `install:` for the local build. Self-contained, prompt-writing principles included. `npx firegoat@latest init` installs it. |
 
 ## Install
+
+### Claude Code plugin
+
+The Firegoat plugin bundles every skill below, the [Firegoat evals MCP server](https://firegoat.ai/evals/docs/mcp) and the [`evals` CLI](https://firegoat.ai/evals/docs/evals-cli):
+```
+/plugin install firegoat --marketplace firegoat-ai/skills
+```
+Or in two steps: `/plugin marketplace add firegoat-ai/skills`, then `/plugin install firegoat@firegoat`. Then run `/mcp` and sign in to the firegoat server with your Firegoat account. The first `evals` call installs the CLI into `~/.cache/firegoat-plugin/bin`; an `evals` already on your `PATH` wins.
+
+### Skills only
 
 Install every skill with the [`skills`](https://www.npmjs.com/package/skills) CLI:
 ```bash

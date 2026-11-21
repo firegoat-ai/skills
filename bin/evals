@@ -1,0 +1,24 @@
+#!/bin/sh
+# Runs the Firegoat evals CLI. Claude Code puts this plugin's bin/ after your own
+# PATH, so an evals you installed yourself always wins. Without one, this installs
+# the official release (checksum-verified by the installer) into a cache dir once.
+set -eu
+
+dir="${XDG_CACHE_HOME:-$HOME/.cache}/firegoat-plugin/bin"
+bin="$dir/evals"
+
+if [ ! -x "$bin" ]; then
+	echo "firegoat plugin: installing the evals CLI into $dir" >&2
+	mkdir -p "$dir"
+	script=$(mktemp)
+	trap 'rm -f "$script"' EXIT
+	curl -fsSL --retry 3 -o "$script" https://firegoat.ai/evals/install.sh
+	if ! out=$(EVALS_INSTALL_DIR="$dir" sh "$script" 2>&1); then
+		echo "$out" >&2
+		exit 1
+	fi
+	rm -f "$script"
+	trap - EXIT
+fi
+
+exec "$bin" "$@"
